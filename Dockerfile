@@ -1,4 +1,5 @@
-FROM nvidia/cuda:12.6.3-cudnn-runtime-ubuntu24.04 AS gdfx2
+# FROM nvidia/cuda:12.6.3-cudnn-runtime-ubuntu24.04 AS gdfx2
+FROM nvidia/cuda:12.2.2-runtime-ubuntu22.04 AS gdfx2
     WORKDIR /home/gdfx2
     RUN apt update && apt install -y \
         python3 \
