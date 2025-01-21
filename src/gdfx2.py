@@ -1,7 +1,6 @@
 import argparse
 import sys
 import torch
-import torchvision
 import traceback
 from isd import DF40ImageSequenceDataset
 
@@ -14,8 +13,9 @@ try:
 
     # TODO: training and test datasets erstellen
     dataset_train = DF40ImageSequenceDataset("/home/gdfx2/io/train")
-    print(dataset_train)
     print(len(dataset_train))
+    print(dataset_train[0])
+    #print(f"first item is '{dataset_train[1]}'")
 
     # BiLSTM
     # https://pytorch.org/tutorials/beginner/basics/data_tutorial.html
