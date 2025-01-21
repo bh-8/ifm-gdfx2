@@ -11,20 +11,12 @@ try:
         raise ImportError("CUDA platform not available")
     print(f"Hello, World!")
 
-    # TODO: training and test datasets erstellen
-    dataset_train = DF40ImageSequenceDataset("/home/gdfx2/io/train")
-    print(len(dataset_train))
-    print(dataset_train[0])
-    #print(f"first item is '{dataset_train[1]}'")
+    dataset_train = DF40ImageSequenceDataset("/home/gdfx2/io/train", 8)
+    dataloader_train = torch.utils.data.DataLoader(dataset_train, batch_size = 64, shuffle = True)
 
     # BiLSTM
-    # https://pytorch.org/tutorials/beginner/basics/data_tutorial.html
+    # TODO...
 
-    #print(dataset)
-    #for idx, (sample, target) in enumerate(dataset):
-    #    print(idx, sample, target)
-
-    # TODO..
 except Exception as e:
     print(f"[!] ERROR: {e} [!]")
     traceback.print_exc()
