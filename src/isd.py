@@ -3,8 +3,9 @@ from torch.utils.data import Dataset
 from torchvision.io import decode_image
 
 class DF40ImageSequenceDataset(Dataset):
-    def __init__(self, root_path: str, sequence_length: int = 32):
+    def __init__(self, root_path: str, sequence_length: int = 32, transform = None):
         self.root: Path = Path(root_path).resolve()
+        self.transform = transform
 
         # browse data location
         pathlist: list[Path] = sorted([e for e in self.root.glob("**/") if e.match("frames/*")])
@@ -19,4 +20,4 @@ class DF40ImageSequenceDataset(Dataset):
         label: str = self.items[index][0]
         pathlist: list[Path] = self.items[index][1]
 
-        return label, [decode_image(i) for i in pathlist]
+        return label, [self.transform(decode_image(i)) if self.transform else decode_image(i) for i in pathlist]
