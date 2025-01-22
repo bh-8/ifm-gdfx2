@@ -33,13 +33,15 @@ try:
     dataloader_train = torch.utils.data.DataLoader(dataset_train, batch_size = BATCH_SIZE, shuffle = True)
 
     bilstm: BiLSTM = BiLSTM(INPUT_SIZE, HIDDEN_SIZE, NUM_LAYERS, len(CLASSES.keys()))
+    print(f"model: {bilstm}")
+
     for label, images in dataloader_train:
         image_sequence = torch.stack(images)
         input_tensor = image_sequence.view(SEQUENCE_LENGTH, BATCH_SIZE, -1)
         labels = [CLASSES[l] for l in label]
 
         out = bilstm.forward(input_tensor)
-        print(out.shape)
+        print(out)
         # BiLSTM
         # TODO...
 

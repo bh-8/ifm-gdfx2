@@ -14,6 +14,6 @@ class BiLSTM(torch.nn.Module):
         self.outl: torch.nn.Linear = torch.nn.Linear(hidden_size, num_classes)
     def forward(self, input):
         out, (hn, cn) = self.lstm(input)
-        #out = out[:,-1,:] # only use last output
-        #out = self.outl(out)
+        out = out[-1,:,:] # only use last sequence output
+        out = self.outl(out)
         return out
