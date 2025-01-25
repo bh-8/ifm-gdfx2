@@ -9,7 +9,7 @@ from alive_progress import alive_bar
 
 #https://discuss.pytorch.org/t/how-upload-sequence-of-image-on-video-classification/24865/9
 INPUT_SIZE = 3 * 256 * 256 # total amount of input features per timestamp
-SEQUENCE_LENGTH = 8 # 8 is shortest, 32 is longest sequence in DF40 dataset
+SEQUENCE_LENGTH = 16 # 8 is shortest, 32 is longest sequence in DF40 dataset
 HIDDEN_SIZE = 3 * 69 # amount of internal lstm features
 NUM_LAYERS = 1
 BATCH_SIZE = 96
@@ -24,10 +24,6 @@ CLASSES = {
 try:
     if not torch.cuda.is_available():
         raise ImportError("CUDA platform not available")
-    print(f"LSTM parameters:")
-    print(f"\tN = {BATCH_SIZE} (batch size)")
-    print(f"\tL = {SEQUENCE_LENGTH} (sequence length)")
-    print(f"\tCLASSES = {len(CLASSES.keys())}")
 
     image_transformation = torchvision.transforms.Compose([
         torchvision.transforms.ToPILImage(),
@@ -37,11 +33,11 @@ try:
     dataloader_train = torch.utils.data.DataLoader(dataset_train, batch_size = BATCH_SIZE, shuffle = True)
 
     bilstm: BiLSTM = BiLSTM(INPUT_SIZE, HIDDEN_SIZE, NUM_LAYERS, len(CLASSES.keys()))
-    bilstm.cuda()
+    bilstm = bilstm.cuda()
 
     lossf = torch.nn.CrossEntropyLoss()
     optim = torch.optim.SGD(bilstm.parameters(), lr = LEARNING_RATE)
-    print(f"model: {bilstm}")
+    print(f"(>) model: {bilstm}")
 
     batches: int = len(dataloader_train) - 1
     with alive_bar(EPOCHS * batches, title=f"BiLSTM {EPOCHS}*{batches}@{BATCH_SIZE}") as pbar:

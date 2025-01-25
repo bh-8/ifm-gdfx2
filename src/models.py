@@ -10,10 +10,16 @@ class BiLSTM(torch.nn.Module):
         self.hidden_size: int = hidden_size
         self.num_layers: int = num_layers
         self.bias: bool = bias
-        self.lstm: torch.nn.LSTM = torch.nn.LSTM(self.input_size, self.hidden_size, self.num_layers, self.bias, batch_first=False, dropout=0, bidirectional=False, proj_size=0)
+        self.lstm: torch.nn.LSTM = torch.nn.LSTM(self.input_size, self.hidden_size, self.num_layers, self.bias, batch_first=False, dropout=0, bidirectional=True, proj_size=0)
         self.outl: torch.nn.Linear = torch.nn.Linear(hidden_size, num_classes)
     def forward(self, input):
         out, (hn, cn) = self.lstm(input)
-        out = out[-1,:,:] # only use last sequence output
+
+        # Erste Hälfte: Vorwärtsausgabe
+        forward_out = out[-1,:,:self.hidden_size]
+        # Zweite Hälfte: Rückwärtsausgabe (letzter Zeitschritt entspricht `out[0]`)
+        backward_out = out[0,:,self.hidden_size:]
+        out = (forward_out + backward_out) / 2
+
         out = self.outl(out)
         return out
