@@ -12,6 +12,7 @@ FROM nvidia/cuda:12.2.2-runtime-ubuntu22.04 AS gdfx2
     # python environment
     RUN python3 -m venv /home/gdfx2/venv
     RUN . /home/gdfx2/venv/bin/activate && pip3 install \
+        alive-progress \
         torch \
         torchvision \
         torchaudio \

@@ -3,8 +3,11 @@ from torch.utils.data import Dataset
 from torchvision.io import decode_image
 
 class DF40ImageSequenceDataset(Dataset):
-    def __init__(self, root_path: str, sequence_length: int = 32, transform = None):
-        self.root: Path = Path(root_path).resolve()
+    def __init__(self, root_path: str, train: bool, sequence_length: int = 32, transform = None):
+        self.root: Path = Path(root_path).resolve() / ("train" if train else "test")
+        if not self.root.exists():
+            raise FileNotFoundError(f"could not access directory '{self.root}'")
+
         self.transform = transform
 
         # browse data location
