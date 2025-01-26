@@ -15,9 +15,7 @@ class BiLSTM(torch.nn.Module):
     def forward(self, input):
         out, (hn, cn) = self.lstm(input)
 
-        # Erste Hälfte: Vorwärtsausgabe
         forward_out = out[-1,:,:self.hidden_size]
-        # Zweite Hälfte: Rückwärtsausgabe (letzter Zeitschritt entspricht `out[0]`)
         backward_out = out[0,:,self.hidden_size:]
         out = (forward_out + backward_out) / 2
 
