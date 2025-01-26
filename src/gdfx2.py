@@ -11,6 +11,7 @@ from alive_progress import alive_bar
 # MOMENTUM?
 # BiLSTM: Wie mit den beiden Richtungen umgehen?
 # DropOut?
+# Parallelisierung
 
 parser = argparse.ArgumentParser(prog = "gdfx2", description = "generalizable deepfake detection framework")
 parser.add_argument("mode", choices = ["train", "test"], help = "mode of operation")
