@@ -20,7 +20,7 @@ parser.add_argument("mode", choices = ["train", "test"], help = "mode of operati
 parser.add_argument("-sl", "--sequence-length", type = int, default = 16, help = "sequence length (8 to 32 for DF40), default is 16")
 
 # training
-parser.add_argument("-bs", "--batch-size", type = int, default = 8, help = "samples per batch, default is 8")
+parser.add_argument("-bs", "--batch-size", type = int, default = 10, help = "samples per batch, default is 10")
 parser.add_argument("-ep", "--epochs", type = int, default = 1, help = "training epochs, default is 1")
 parser.add_argument("-lr", "--learning-rate", type = float, default = 0.01, help = "learning rate (0 to 1), default is 0.01")
 
@@ -96,6 +96,7 @@ try:
         print(f"\tclasses: {len(CLASSES.keys())}")
         print("(>) initializing dataset")
         dataset_train = DF40ImageSequenceDataset("/home/gdfx2/io", train = True, sequence_length = SEQUENCE_LENGTH, transform = DF40_TRANSFORMATION)
+        print(f"\titems: {len(dataset_train)}")
 
         print("(>) setting up dataloader")
         dataloader_train = torch.utils.data.DataLoader(dataset_train, batch_size = BATCH_SIZE, shuffle = True)
