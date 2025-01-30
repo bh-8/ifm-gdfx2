@@ -11,9 +11,7 @@ from models import BiLSTM
 from alive_progress import alive_bar
 
 # MOMENTUM?
-# BiLSTM: Wie mit den beiden Richtungen umgehen?
 # DropOut?
-# Parallelisierung
 
 parser = argparse.ArgumentParser(prog = "gdfx2", description = "generalizable deepfake detection framework")
 parser.add_argument("mode", choices = ["train", "test"], help = "mode of operation")
@@ -23,8 +21,9 @@ parser.add_argument("-sl", "--sequence-length", type = int, default = 16, help =
 
 # training
 parser.add_argument("-bs", "--batch-size", type = int, default = 10, help = "samples per batch, default is 10")
+parser.add_argument("-mb", "--max-batches", type = int, default = None, help = "cap the amount of batches per epoch")
 parser.add_argument("-ep", "--epochs", type = int, default = 1, help = "training epochs, default is 1")
-parser.add_argument("-lr", "--learning-rate", type = float, default = 0.01, help = "learning rate (0 to 1), default is 0.01")
+parser.add_argument("-lr", "--learning-rate", type = float, default = 0.03, help = "learning rate (0 to 1), default is 0.03")
 
 # model
 parser.add_argument("-hs", "--hidden-size", type = int, default = 256, help = "internal lstm features (net width), default is 256")
@@ -39,13 +38,15 @@ args = parser.parse_args()
 
 MODE_TRAIN: bool = args.mode == "train"
 MODE_TEST: bool = args.mode == "test"
-if MODE_TRAIN == MODE_TEST:
+if not (MODE_TRAIN or MODE_TEST):
     raise AssertionError("rip")
 
 if args.sequence_length < 8 or args.sequence_length > 32:
     raise AssertionError("sequence length out of range")
 if args.batch_size < 1:
     raise AssertionError("batch size out of range")
+if args.max_batches and args.max_batches < 1:
+    raise AssertionError("max batches out of range")
 if args.epochs < 1:
     raise AssertionError("epoch size out of range")
 if args.learning_rate <= 0 or args.learning_rate >= 1:
@@ -79,6 +80,8 @@ CLASSES = {
 }
 if not torch.cuda.is_available():
     raise ImportError("CUDA platform not available")
+device = torch.device("cuda")
+print(f"(>) cuda devices: {torch.cuda.device_count()}")
 
 DF40_TRANSFORMATION = torchvision.transforms.Compose([
     torchvision.transforms.ToPILImage(),
@@ -102,12 +105,13 @@ try:
 
     print("(>) setting up dataloader")
     dataloader_df40 = torch.utils.data.DataLoader(dataset_df40, batch_size = BATCH_SIZE, shuffle = True)
-    batches: int = len(dataloader_df40) - 1 # crash fix - 1
+    batches: int = min(len(dataloader_df40) - 1, args.max_batches) if args.max_batches else len(dataloader_df40) - 1 # crash fix - 1
     print(f"\tbatches per epoch: {batches}")
     print(f"\ttotal batches: {EPOCHS * batches}")
 
     bilstm: BiLSTM = BiLSTM(INPUT_SIZE, HIDDEN_SIZE, NUM_LAYERS, len(CLASSES.keys()))
-    bilstm = bilstm.cuda()
+    bilstm = torch.nn.DataParallel(bilstm)
+    bilstm = bilstm.to(device)
     if LOAD_MODEL:
         print(f"(>) loading model from '{LOAD_MODEL}'")
         bilstm.load_state_dict(torch.load(LOAD_MODEL, weights_only=True))
@@ -134,15 +138,15 @@ try:
                 bilstm.train(True)
                 for i, data in enumerate(dataloader_df40):
                     if i >= batches:
-                        break # crash fix
+                        break
 
                     labels, images = data
 
                     image_sequences = torch.stack(images)
                     input_tensor = image_sequences.view(SEQUENCE_LENGTH, BATCH_SIZE, -1)
-                    input_tensor = input_tensor.cuda()
+                    input_tensor = input_tensor.to(device)
                     input_labels = torch.tensor([CLASSES[l] for l in labels], dtype = torch.long)
-                    input_labels = input_labels.cuda()
+                    input_labels = input_labels.to(device)
 
                     # start with clean gradient
                     optim.zero_grad()
@@ -191,6 +195,8 @@ try:
         print("(>) done")
 
     if MODE_TEST:
+        raise NotImplementedError("TODO: not done yet")
+
         bilstm.eval()
 
         with alive_bar(batches, title=f"BiLSTM test {batches}@{BATCH_SIZE}") as pbar:
@@ -202,9 +208,9 @@ try:
 
                 image_sequences = torch.stack(images)
                 input_tensor = image_sequences.view(SEQUENCE_LENGTH, BATCH_SIZE, -1)
-                input_tensor = input_tensor.cuda()
+                input_tensor = input_tensor.to(device)
                 input_labels = torch.tensor([CLASSES[l] for l in labels], dtype = torch.long)
-                input_labels = input_labels.cuda()
+                input_labels = input_labels.to(device)
 
                 with torch.no_grad():
                     output_tensor = bilstm.forward(input_tensor)
