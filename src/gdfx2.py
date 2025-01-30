@@ -3,7 +3,7 @@ import sys
 import torch
 import torchvision
 import torcheval
-from torcheval.metrics.functional import multiclass_f1_score
+from torcheval.metrics.functional import multiclass_accuracy, multiclass_precision, multiclass_recall, multiclass_f1_score, multiclass_auroc
 import traceback
 from pathlib import Path
 from isd import DF40ImageSequenceDataset
@@ -122,10 +122,14 @@ try:
         with alive_bar(EPOCHS * batches, title=f"BiLSTM train {EPOCHS}*{batches}@{BATCH_SIZE}") as pbar:
             for e in range(EPOCHS):
                 print(f"(>) === epoch {e + 1} ===")
-                epoch_total: float = 0.
-                epoch_correct: float = 0.
+                epoch_total: int = 0
+                epoch_correct: int = 0
                 epoch_loss: float = 0.
+                epoch_accuracy: float = 0.
+                epoch_precision: float = 0.
+                epoch_recall: float = 0.
                 epoch_f1: float = 0.
+                epoch_auroc: float = 0.
 
                 bilstm.train(True)
                 for i, data in enumerate(dataloader_df40):
@@ -158,17 +162,29 @@ try:
                     epoch_total += BATCH_SIZE
                     epoch_correct += (predicted_labels == input_labels).sum().item()
                     epoch_loss += loss.item()
+                    epoch_accuracy += multiclass_accuracy(predicted_labels, input_labels, num_classes = len(CLASSES.keys())).item()
+                    epoch_precision += multiclass_precision(predicted_labels, input_labels, num_classes = len(CLASSES.keys())).item()
+                    epoch_recall += multiclass_recall(predicted_labels, input_labels, num_classes = len(CLASSES.keys())).item()
                     epoch_f1 += multiclass_f1_score(predicted_labels, input_labels, num_classes = len(CLASSES.keys())).item()
+                    epoch_auroc += multiclass_auroc(torch.nn.functional.softmax(output_tensor, dim=1), input_labels, num_classes = len(CLASSES.keys())).item()
 
                     pbar(1)
                 bilstm.eval()
 
-                accuracy: float = epoch_correct / epoch_total # calculated per item
+                #print(f"\tavg accuracy: {round(accuracy * 100, 3)}%")
                 epoch_loss: float = epoch_loss / batches # calculated per batch
+                epoch_accuracy: float = epoch_accuracy / batches # calculated per batch
+                epoch_precision: float = epoch_precision / batches # calculated per batch
+                epoch_recall: float = epoch_recall / batches # calculated per batch
                 epoch_f1: float = epoch_f1 / batches # calculated per batch
-                print(f"\tavg accuracy: {round(accuracy * 100, 3)}%")
+                epoch_auroc: float = epoch_auroc / batches # calculated per batch
+                print(f"\tcorrect: {epoch_correct}/{epoch_total}")
                 print(f"\tavg loss: {round(epoch_loss, 5)}")
+                print(f"\tavg accuracy: {round(epoch_accuracy, 5)}")
+                print(f"\tavg precision: {round(epoch_precision, 5)}")
+                print(f"\tavg recall: {round(epoch_recall, 5)}")
                 print(f"\tavg f measure: {round(epoch_f1, 5)}")
+                print(f"\tavg area under roc: {round(epoch_auroc, 5)}")
         if SAVE_MODEL:
             print(f"(>) saving model to '{SAVE_MODEL}'")
             torch.save(bilstm.state_dict(), SAVE_MODEL)

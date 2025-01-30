@@ -14,11 +14,9 @@ FROM nvidia/cuda:12.2.2-runtime-ubuntu22.04 AS gdfx2
     RUN . /home/gdfx2/venv/bin/activate && pip3 install \
         alive-progress \
         torch \
-        torchvision \
         torchaudio \
-        && deactivate
-    RUN . /home/gdfx2/venv/bin/activate && pip3 install \
         torcheval \
+        torchvision \
         && deactivate
 
     # create entrypoint
