@@ -2,6 +2,8 @@ import argparse
 import sys
 import torch
 import torchvision
+import torcheval
+from torcheval.metrics.functional import multiclass_f1_score
 import traceback
 from pathlib import Path
 from isd import DF40ImageSequenceDataset
@@ -120,8 +122,10 @@ try:
         with alive_bar(EPOCHS * batches, title=f"BiLSTM train {EPOCHS}*{batches}@{BATCH_SIZE}") as pbar:
             for e in range(EPOCHS):
                 print(f"(>) === epoch {e + 1} ===")
-                loss_epoch = 0.
-                correct = 0.
+                epoch_total: float = 0.
+                epoch_correct: float = 0.
+                epoch_loss: float = 0.
+                epoch_f1: float = 0.
 
                 bilstm.train(True)
                 for i, data in enumerate(dataloader_df40):
@@ -140,24 +144,31 @@ try:
                     optim.zero_grad()
                     output_tensor = bilstm.forward(input_tensor)
 
-                    # compute loss and gradients
+                    # compute loss, gradients and backprop
                     loss = lossf(output_tensor, input_labels)
                     loss.backward()
 
                     # adjust weights
                     optim.step()
 
-                    # sum up error
-                    loss_epoch += loss.item()
-                    correct += (output_tensor == labels).float().sum()
+                    # current predictions
+                    _, predicted_labels = torch.max(output_tensor, 1)
 
-                    #print(f"(>) batch {i + 1} loss: {loss.item()}")
+                    # stats
+                    epoch_total += BATCH_SIZE
+                    epoch_correct += (predicted_labels == input_labels).sum().item()
+                    epoch_loss += loss.item()
+                    epoch_f1 += multiclass_f1_score(predicted_labels, input_labels, num_classes = len(CLASSES.keys())).item()
+
                     pbar(1)
-                loss_epoch = loss_epoch / batches
                 bilstm.eval()
-                accuracy = 100 * correct / len(dataset_df40)
 
-                print(f"(>) epoch loss avg: {loss_epoch}")
+                accuracy: float = epoch_correct / epoch_total # calculated per item
+                epoch_loss: float = epoch_loss / batches # calculated per batch
+                epoch_f1: float = epoch_f1 / batches # calculated per batch
+                print(f"\tavg accuracy: {round(accuracy * 100, 3)}%")
+                print(f"\tavg loss: {round(epoch_loss, 5)}")
+                print(f"\tavg f measure: {round(epoch_f1, 5)}")
         if SAVE_MODEL:
             print(f"(>) saving model to '{SAVE_MODEL}'")
             torch.save(bilstm.state_dict(), SAVE_MODEL)
@@ -165,6 +176,7 @@ try:
 
     if MODE_TEST:
         bilstm.eval()
+
         with alive_bar(batches, title=f"BiLSTM test {batches}@{BATCH_SIZE}") as pbar:
             for i, data in enumerate(dataloader_df40):
                 if i >= batches:
@@ -179,9 +191,10 @@ try:
                 input_labels = input_labels.cuda()
 
                 with torch.no_grad():
-                    output_tensor = torch.sigmoid(bilstm.forward(input_tensor))
+                    output_tensor = bilstm.forward(input_tensor)
+                    _, predicted_labels = torch.max(output_tensor, 1)
 
-                # TODO: see pytorch ignite
+                # TODO: see pytorch ignite / torch.sigmoid?
 
                 pbar(1)
 
