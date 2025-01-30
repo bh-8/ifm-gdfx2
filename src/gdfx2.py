@@ -84,45 +84,47 @@ DF40_TRANSFORMATION = torchvision.transforms.Compose([
 ])
 
 try:
+    print("(>) parameters")
+    print(f"\tinput size: {INPUT_SIZE}")
+    print(f"\tsequence length: {SEQUENCE_LENGTH}")
+    print(f"\tbatch size: {BATCH_SIZE}")
+    print(f"\tepochs: {EPOCHS}")
+    print(f"\tlearning rate: {LEARNING_RATE}")
+    print(f"\thidden size: {HIDDEN_SIZE}")
+    print(f"\tnum layers: {NUM_LAYERS}")
+    print(f"\tclasses: {len(CLASSES.keys())}")
+
+    print("(>) initializing dataset")
+    dataset_df40 = DF40ImageSequenceDataset("/home/gdfx2/io", train = MODE_TRAIN, sequence_length = SEQUENCE_LENGTH, transform = DF40_TRANSFORMATION)
+    print(f"\titems: {len(dataset_df40)}")
+
+    print("(>) setting up dataloader")
+    dataloader_df40 = torch.utils.data.DataLoader(dataset_df40, batch_size = BATCH_SIZE, shuffle = True)
+    batches: int = len(dataloader_df40) - 1 # crash fix - 1
+    print(f"\tbatches per epoch: {batches}")
+    print(f"\ttotal batches: {EPOCHS * batches}")
+
+    bilstm: BiLSTM = BiLSTM(INPUT_SIZE, HIDDEN_SIZE, NUM_LAYERS, len(CLASSES.keys()))
+    bilstm = bilstm.cuda()
+    if LOAD_MODEL:
+        print(f"(>) loading model from '{LOAD_MODEL}'")
+        bilstm.load_state_dict(torch.load(LOAD_MODEL, weights_only=True))
+        bilstm.eval()
+        # TODO: load optimizer state_dict
+    print(f"(>) model: {bilstm}")
+
     if MODE_TRAIN:
-        print("(>) parameters")
-        print(f"\tinput size: {INPUT_SIZE}")
-        print(f"\tsequence length: {SEQUENCE_LENGTH}")
-        print(f"\tbatch size: {BATCH_SIZE}")
-        print(f"\tepochs: {EPOCHS}")
-        print(f"\tlearning rate: {LEARNING_RATE}")
-        print(f"\thidden size: {HIDDEN_SIZE}")
-        print(f"\tnum layers: {NUM_LAYERS}")
-        print(f"\tclasses: {len(CLASSES.keys())}")
-        print("(>) initializing dataset")
-        dataset_train = DF40ImageSequenceDataset("/home/gdfx2/io", train = True, sequence_length = SEQUENCE_LENGTH, transform = DF40_TRANSFORMATION)
-        print(f"\titems: {len(dataset_train)}")
-
-        print("(>) setting up dataloader")
-        dataloader_train = torch.utils.data.DataLoader(dataset_train, batch_size = BATCH_SIZE, shuffle = True)
-        batches: int = len(dataloader_train) - 1 # crash fix - 1
-        print(f"\tbatches per epoch: {batches}")
-        print(f"\ttotal batches: {EPOCHS * batches}")
-
-        bilstm: BiLSTM = BiLSTM(INPUT_SIZE, HIDDEN_SIZE, NUM_LAYERS, len(CLASSES.keys()))
-        bilstm = bilstm.cuda()
-        if LOAD_MODEL:
-            print(f"(>) loading model from '{LOAD_MODEL}'")
-            bilstm.load_state_dict(torch.load(LOAD_MODEL, weights_only=True))
-            bilstm.eval()
-            # TODO: load optimizer state_dict
-
         lossf = torch.nn.CrossEntropyLoss()
         optim = torch.optim.AdamW(bilstm.parameters(), lr = LEARNING_RATE)
-        print(f"(>) model: {bilstm}")
 
-        with alive_bar(EPOCHS * batches, title=f"BiLSTM {EPOCHS}*{batches}@{BATCH_SIZE}") as pbar:
+        with alive_bar(EPOCHS * batches, title=f"BiLSTM train {EPOCHS}*{batches}@{BATCH_SIZE}") as pbar:
             for e in range(EPOCHS):
                 print(f"(>) === epoch {e + 1} ===")
                 loss_epoch = 0.
+                correct = 0.
 
                 bilstm.train(True)
-                for i, data in enumerate(dataloader_train):
+                for i, data in enumerate(dataloader_df40):
                     if i >= batches:
                         break # crash fix
 
@@ -136,10 +138,10 @@ try:
 
                     # start with clean gradient
                     optim.zero_grad()
-                    output = bilstm.forward(input_tensor)
+                    output_tensor = bilstm.forward(input_tensor)
 
                     # compute loss and gradients
-                    loss = lossf(output, input_labels)
+                    loss = lossf(output_tensor, input_labels)
                     loss.backward()
 
                     # adjust weights
@@ -147,10 +149,14 @@ try:
 
                     # sum up error
                     loss_epoch += loss.item()
+                    correct += (output_tensor == labels).float().sum()
+
                     #print(f"(>) batch {i + 1} loss: {loss.item()}")
                     pbar(1)
                 loss_epoch = loss_epoch / batches
                 bilstm.eval()
+                accuracy = 100 * correct / len(dataset_df40)
+
                 print(f"(>) epoch loss avg: {loss_epoch}")
         if SAVE_MODEL:
             print(f"(>) saving model to '{SAVE_MODEL}'")
@@ -158,7 +164,26 @@ try:
         print("(>) done")
 
     if MODE_TEST:
-        pass
+        bilstm.eval()
+        with alive_bar(batches, title=f"BiLSTM test {batches}@{BATCH_SIZE}") as pbar:
+            for i, data in enumerate(dataloader_df40):
+                if i >= batches:
+                    break # crash fix
+
+                labels, images = data
+
+                image_sequences = torch.stack(images)
+                input_tensor = image_sequences.view(SEQUENCE_LENGTH, BATCH_SIZE, -1)
+                input_tensor = input_tensor.cuda()
+                input_labels = torch.tensor([CLASSES[l] for l in labels], dtype = torch.long)
+                input_labels = input_labels.cuda()
+
+                with torch.no_grad():
+                    output_tensor = torch.sigmoid(bilstm.forward(input_tensor))
+
+                # TODO: see pytorch ignite
+
+                pbar(1)
 
 except Exception as e:
     print(f"[!] ERROR: {e} [!]")
