@@ -10,24 +10,26 @@ from isd import DF40ImageSequenceDataset
 from models import BiLSTM
 from alive_progress import alive_bar
 
-# MOMENTUM?
-# DropOut?
+# Adaptive LR?
 
 parser = argparse.ArgumentParser(prog = "gdfx2", description = "generalizable deepfake detection framework")
 parser.add_argument("mode", choices = ["train", "test"], help = "mode of operation")
 
 # dataset
+parser.add_argument("-ds", "--df40-dataset", type = str, default = "io", help = "path to df40 dataset, default is 'io'")
 parser.add_argument("-sl", "--sequence-length", type = int, default = 16, help = "sequence length (8 to 32 for DF40), default is 16")
 
 # training
 parser.add_argument("-bs", "--batch-size", type = int, default = 10, help = "samples per batch, default is 10")
 parser.add_argument("-mb", "--max-batches", type = int, default = None, help = "cap the amount of batches per epoch")
 parser.add_argument("-ep", "--epochs", type = int, default = 1, help = "training epochs, default is 1")
-parser.add_argument("-lr", "--learning-rate", type = float, default = 0.03, help = "learning rate (0 to 1), default is 0.03")
+parser.add_argument("-lr", "--learning-rate", type = float, default = 1e-6, help = "learning rate (0 to 1), default is 1e-6")
+parser.add_argument("-wd", "--weight-decay", type = float, default = 0.03, help = "weight decay (0 to 1), default is 0.03")
 
 # model
 parser.add_argument("-hs", "--hidden-size", type = int, default = 256, help = "internal lstm features (net width), default is 256")
 parser.add_argument("-nl", "--num-layers", type = int, default = 3, help = "stacked lstm layers (net depth), default is 3")
+parser.add_argument("-do", "--dropout", type = float, default = 0.3, help = "lstm dropout (0 to 1), default is 0.3")
 
 # io actions
 parser.add_argument("-sm", "--save-model", type = str, default = None, help = "save model after training to given path")
@@ -51,10 +53,14 @@ if args.epochs < 1:
     raise AssertionError("epoch size out of range")
 if args.learning_rate <= 0 or args.learning_rate >= 1:
     raise AssertionError("learning rate out of range")
+if args.weight_decay < 0 or args.weight_decay >= 1:
+    raise AssertionError("weight decay out of range")
 if args.hidden_size < 1:
     raise AssertionError("hidden size out of range")
 if args.num_layers < 1:
     raise AssertionError("num layers out of range")
+if args.dropout < 0 or args.dropout >= 1:
+    raise AssertionError("dropout out of range")
 
 SAVE_MODEL = None
 if args.save_model:
@@ -72,8 +78,10 @@ SEQUENCE_LENGTH = args.sequence_length
 BATCH_SIZE = args.batch_size
 EPOCHS = args.epochs
 LEARNING_RATE = args.learning_rate
+WEIGHT_DECAY = args.weight_decay
 HIDDEN_SIZE = args.hidden_size
 NUM_LAYERS = args.num_layers
+DROPOUT = args.dropout
 CLASSES = {
     "face_reenact": 0,
     "face_swap": 1
@@ -95,12 +103,14 @@ try:
     print(f"\tbatch size: {BATCH_SIZE}")
     print(f"\tepochs: {EPOCHS}")
     print(f"\tlearning rate: {LEARNING_RATE}")
+    print(f"\tweight decay: {WEIGHT_DECAY}")
     print(f"\thidden size: {HIDDEN_SIZE}")
     print(f"\tnum layers: {NUM_LAYERS}")
+    print(f"\tlstm dropout: {DROPOUT}")
     print(f"\tclasses: {len(CLASSES.keys())}")
 
     print("(>) initializing dataset")
-    dataset_df40 = DF40ImageSequenceDataset("/home/gdfx2/io", train = MODE_TRAIN, sequence_length = SEQUENCE_LENGTH, transform = DF40_TRANSFORMATION)
+    dataset_df40 = DF40ImageSequenceDataset(args.df40_dataset, train = MODE_TRAIN, sequence_length = SEQUENCE_LENGTH, transform = DF40_TRANSFORMATION)
     print(f"\titems: {len(dataset_df40)}")
 
     print("(>) setting up dataloader")
@@ -109,7 +119,7 @@ try:
     print(f"\tbatches per epoch: {batches}")
     print(f"\ttotal batches: {EPOCHS * batches}")
 
-    bilstm: BiLSTM = BiLSTM(INPUT_SIZE, HIDDEN_SIZE, NUM_LAYERS, len(CLASSES.keys()))
+    bilstm: BiLSTM = BiLSTM(INPUT_SIZE, HIDDEN_SIZE, NUM_LAYERS, DROPOUT, len(CLASSES.keys()))
     bilstm = torch.nn.DataParallel(bilstm)
     bilstm = bilstm.to(device)
     if LOAD_MODEL:
@@ -121,19 +131,19 @@ try:
 
     if MODE_TRAIN:
         lossf = torch.nn.CrossEntropyLoss()
-        optim = torch.optim.AdamW(bilstm.parameters(), lr = LEARNING_RATE)
+        optim = torch.optim.AdamW(bilstm.parameters(), lr = LEARNING_RATE, weight_decay = WEIGHT_DECAY)
 
         with alive_bar(EPOCHS * batches, title=f"BiLSTM train {EPOCHS}*{batches}@{BATCH_SIZE}") as pbar:
             for e in range(EPOCHS):
                 print(f"(>) === epoch {e + 1} ===")
                 epoch_total: int = 0
                 epoch_correct: int = 0
-                epoch_loss: float = 0.
-                epoch_accuracy: float = 0.
-                epoch_precision: float = 0.
-                epoch_recall: float = 0.
-                epoch_f1: float = 0.
-                epoch_auroc: float = 0.
+                loss_values: list[float] = []
+                accuracy_values: list[float] = []
+                precision_values: list[float] = []
+                recall_values: list[float] = []
+                fmeasure_values: list[float] = []
+                auroc_values: list[float] = []
 
                 bilstm.train(True)
                 for i, data in enumerate(dataloader_df40):
@@ -149,46 +159,42 @@ try:
                     input_labels = input_labels.to(device)
 
                     # start with clean gradient
-                    optim.zero_grad()
                     output_tensor = bilstm.forward(input_tensor)
 
-                    # compute loss, gradients and backprop
+                    # compute loss, gradients and backprop, adjust weights
                     loss = lossf(output_tensor, input_labels)
+                    optim.zero_grad()
                     loss.backward()
-
-                    # adjust weights
                     optim.step()
 
                     # current predictions
                     _, predicted_labels = torch.max(output_tensor, 1)
+                    predicted_props = torch.nn.functional.softmax(output_tensor, dim=1)
+                    print(predicted_props)
+                    print(predicted_labels)
+                    print(input_labels)
+                    print(f"{(predicted_labels == input_labels).sum().item()}/{BATCH_SIZE}")
 
                     # stats
                     epoch_total += BATCH_SIZE
                     epoch_correct += (predicted_labels == input_labels).sum().item()
-                    epoch_loss += loss.item()
-                    epoch_accuracy += multiclass_accuracy(predicted_labels, input_labels, num_classes = len(CLASSES.keys())).item()
-                    epoch_precision += multiclass_precision(predicted_labels, input_labels, num_classes = len(CLASSES.keys())).item()
-                    epoch_recall += multiclass_recall(predicted_labels, input_labels, num_classes = len(CLASSES.keys())).item()
-                    epoch_f1 += multiclass_f1_score(predicted_labels, input_labels, num_classes = len(CLASSES.keys())).item()
-                    epoch_auroc += multiclass_auroc(torch.nn.functional.softmax(output_tensor, dim=1), input_labels, num_classes = len(CLASSES.keys())).item()
+                    loss_values.append(loss.item())
+                    accuracy_values.append(multiclass_accuracy(predicted_props, input_labels, num_classes = len(CLASSES.keys()), average = "macro").item())
+                    precision_values.append(multiclass_precision(predicted_props, input_labels, num_classes = len(CLASSES.keys()), average = "macro").item())
+                    recall_values.append(multiclass_recall(predicted_props, input_labels, num_classes = len(CLASSES.keys()), average = "macro").item())
+                    fmeasure_values.append(multiclass_f1_score(predicted_props, input_labels, num_classes = len(CLASSES.keys()), average = "macro").item())
+                    auroc_values.append(multiclass_auroc(predicted_props, input_labels, num_classes = len(CLASSES.keys()), average = "macro").item())
 
                     pbar(1)
                 bilstm.eval()
 
-                #print(f"\tavg accuracy: {round(accuracy * 100, 3)}%")
-                epoch_loss: float = epoch_loss / batches # calculated per batch
-                epoch_accuracy: float = epoch_accuracy / batches # calculated per batch
-                epoch_precision: float = epoch_precision / batches # calculated per batch
-                epoch_recall: float = epoch_recall / batches # calculated per batch
-                epoch_f1: float = epoch_f1 / batches # calculated per batch
-                epoch_auroc: float = epoch_auroc / batches # calculated per batch
                 print(f"\tcorrect: {epoch_correct}/{epoch_total}")
-                print(f"\tavg loss: {round(epoch_loss, 5)}")
-                print(f"\tavg accuracy: {round(epoch_accuracy, 5)}")
-                print(f"\tavg precision: {round(epoch_precision, 5)}")
-                print(f"\tavg recall: {round(epoch_recall, 5)}")
-                print(f"\tavg f measure: {round(epoch_f1, 5)}")
-                print(f"\tavg area under roc: {round(epoch_auroc, 5)}")
+                print(f"\tavg loss: {round(sum(loss_values) / len(loss_values), 5)}")
+                print(f"\tavg accuracy: {round(sum(accuracy_values) / len(accuracy_values), 5)}")
+                print(f"\tavg precision: {round(sum(precision_values) / len(precision_values), 5)}")
+                print(f"\tavg recall: {round(sum(recall_values) / len(recall_values), 5)}")
+                print(f"\tavg f measure: {round(sum(fmeasure_values) / len(fmeasure_values), 5)}")
+                print(f"\tavg area under roc: {round(sum(auroc_values) / len(auroc_values), 5)}")
         if SAVE_MODEL:
             print(f"(>) saving model to '{SAVE_MODEL}'")
             torch.save(bilstm.state_dict(), SAVE_MODEL)
