@@ -1,0 +1,26 @@
+nach 5 epochen mit jeweils 142 batches à 10 samples
+correct: 767/1420
+on 710:         avg loss: 0.69036
+on 710:         avg accuracy: 0.5414
+on 710:         avg precision: 0.53675
+on 710:         avg recall: 0.53858
+on 710:         avg f measure: 0.49195
+on 710:         avg area under roc: 0.58527
+
+nach 10 epochen mit jeweils 142 batches à 10 samples
+correct: 841/1420
+on 710:         avg loss: 0.68552
+on 710:         avg accuracy: 0.58775
+on 710:         avg precision: 0.59181
+on 710:         avg recall: 0.58775
+on 710:         avg f measure: 0.55177
+on 710:         avg area under roc: 0.63952
+
+nach 20 epochen mit jeweils 142 batches à 10 samples
+correct: 958/1420
+on 1420:        avg loss: 0.67388
+on 1420:        avg accuracy: 0.67993
+on 1420:        avg precision: 0.68302
+on 1420:        avg recall: 0.67993
+on 1420:        avg f measure: 0.65315
+on 1420:        avg area under roc: 0.73797
