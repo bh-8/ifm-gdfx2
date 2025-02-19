@@ -161,6 +161,7 @@ try:
                     # start with clean gradient
                     output_tensor = bilstm.forward(input_tensor)
 
+                    print(output_tensor)
                     # compute loss, gradients and backprop, adjust weights
                     loss = lossf(output_tensor, input_labels)
                     optim.zero_grad()
