@@ -151,6 +151,8 @@ try:
                         break
 
                     labels, images = data
+                    print(f"labels shape: {labels}")
+                    print(f"images shape: {images}")
 
                     image_sequences = torch.stack(images)
                     input_tensor = image_sequences.view(SEQUENCE_LENGTH, BATCH_SIZE, -1)
