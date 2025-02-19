@@ -163,6 +163,8 @@ try:
 
                     print(output_tensor)
                     # compute loss, gradients and backprop, adjust weights
+                    print(f"output_tensor shape: {output_tensor.shape}")
+                    print(f"input_labels shape: {input_labels.shape}")
                     loss = lossf(output_tensor, input_labels)
                     optim.zero_grad()
                     loss.backward()
