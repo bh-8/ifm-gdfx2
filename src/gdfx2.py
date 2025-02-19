@@ -152,7 +152,7 @@ try:
 
                     labels, images = data
                     print(f"labels shape: {labels}")
-                    print(f"images shape: {images}")
+                    print(f"images len: {len(images)}")
 
                     image_sequences = torch.stack(images)
                     input_tensor = image_sequences.view(SEQUENCE_LENGTH, BATCH_SIZE, -1)
