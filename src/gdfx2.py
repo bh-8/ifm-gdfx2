@@ -152,9 +152,9 @@ try:
 
                     labels, images = data
                     print(f"labels shape: {labels}")
-                    print(f"images len: {len(images)}")
 
                     image_sequences = torch.stack(images)
+                    print(f"image_sequences: {image_sequences.shape}")
                     input_tensor = image_sequences.view(SEQUENCE_LENGTH, BATCH_SIZE, -1)
                     input_tensor = input_tensor.to(device)
                     input_labels = torch.tensor([CLASSES[l] for l in labels], dtype = torch.long)
