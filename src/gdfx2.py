@@ -88,7 +88,7 @@ CLASSES = {
 }
 if not torch.cuda.is_available():
     raise ImportError("CUDA platform not available")
-device = torch.device("cuda:0")
+device = torch.device("cuda")
 print(f"(>) cuda devices: {torch.cuda.device_count()}")
 
 DF40_TRANSFORMATION = torchvision.transforms.Compose([
@@ -146,7 +146,8 @@ try:
                 auroc_values: list[float] = []
 
                 bilstm.train(True)
-                for i, data in enumerate(dataloader_df40):
+                i: int = 0
+                for data in dataloader_df40:
                     if i >= batches:
                         break
 
@@ -193,6 +194,7 @@ try:
                     auroc_values.append(multiclass_auroc(predicted_props, input_labels, num_classes = len(CLASSES.keys()), average = "macro").item())
 
                     pbar(1)
+                    i += 1
                 bilstm.eval()
 
                 print(f"\tcorrect: {epoch_correct}/{epoch_total}")
