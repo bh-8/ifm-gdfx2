@@ -88,7 +88,7 @@ CLASSES = {
 }
 if not torch.cuda.is_available():
     raise ImportError("CUDA platform not available")
-device = torch.device("cuda")
+device = torch.device("cuda:0")
 print(f"(>) cuda devices: {torch.cuda.device_count()}")
 
 DF40_TRANSFORMATION = torchvision.transforms.Compose([
@@ -121,7 +121,7 @@ try:
 
     bilstm: BiLSTM = BiLSTM(INPUT_SIZE, HIDDEN_SIZE, NUM_LAYERS, DROPOUT, len(CLASSES.keys()))
     bilstm = torch.nn.DataParallel(bilstm)
-    bilstm = bilstm.to("cuda:0")
+    bilstm = bilstm.to(device)
     if LOAD_MODEL:
         print(f"(>) loading model from '{LOAD_MODEL}'")
         bilstm.load_state_dict(torch.load(LOAD_MODEL, weights_only=True))
