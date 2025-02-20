@@ -157,8 +157,8 @@ try:
                     image_sequences = torch.stack(images)
                     print(f"image_sequences: {image_sequences.shape}")
                     input_tensor = image_sequences.view(SEQUENCE_LENGTH, BATCH_SIZE, -1)
+                    input_tensor = input_tensor.to(device)
                     print(f"input_tensor: {input_tensor.shape}")
-                    input_tensor = input_tensor.to("cuda:0")
                     input_labels = torch.tensor([CLASSES[l] for l in labels], dtype = torch.long)
                     input_labels = input_labels.to(device)
 
