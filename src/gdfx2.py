@@ -154,17 +154,17 @@ try:
                     labels, input_tensor = data
                     input_labels = torch.tensor([CLASSES[l] for l in labels], dtype = torch.long)
 
-                    print(f"device: {device}")
+                    #print(f"device: {device}")
                     input_tensor = input_tensor.to(device)
                     input_labels = input_labels.to(device)
-                    print(f"input_tensor: {input_tensor.shape}")
-                    print(f"input_labels: {input_labels.shape}")
+                    #print(f"input_tensor: {input_tensor.shape}")
+                    #print(f"input_labels: {input_labels.shape}")
 
                     # start with clean gradient
                     output_tensor = bilstm.forward(input_tensor)
 
                     # compute loss, gradients and backprop, adjust weights
-                    print(f"output_tensor: {output_tensor.shape}")
+                    #print(f"output_tensor: {output_tensor.shape}")
                     loss = lossf(output_tensor, input_labels)
                     optim.zero_grad()
                     loss.backward()
