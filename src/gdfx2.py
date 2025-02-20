@@ -121,7 +121,7 @@ try:
 
     bilstm: BiLSTM = BiLSTM(INPUT_SIZE, HIDDEN_SIZE, NUM_LAYERS, DROPOUT, len(CLASSES.keys()))
     bilstm = torch.nn.DataParallel(bilstm)
-    bilstm = bilstm.to(device)
+    bilstm = bilstm.to("cuda:0")
     if LOAD_MODEL:
         print(f"(>) loading model from '{LOAD_MODEL}'")
         bilstm.load_state_dict(torch.load(LOAD_MODEL, weights_only=True))
