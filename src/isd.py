@@ -1,4 +1,5 @@
 from pathlib import Path
+import torch
 from torch.utils.data import Dataset
 from torchvision.io import decode_image
 
@@ -8,6 +9,7 @@ class DF40ImageSequenceDataset(Dataset):
         if not self.root.exists():
             raise FileNotFoundError(f"could not access directory '{self.root}'")
 
+        self.sequence_length = sequence_length
         self.transform = transform
 
         # browse data location
@@ -23,4 +25,4 @@ class DF40ImageSequenceDataset(Dataset):
         label: str = self.items[index][0]
         pathlist: list[Path] = self.items[index][1]
 
-        return label, [self.transform(decode_image(i)) if self.transform else decode_image(i) for i in pathlist]
+        return label, torch.stack([self.transform(decode_image(i)) if self.transform else decode_image(i) for i in pathlist]).view(self.sequence_length, -1)

@@ -151,25 +151,20 @@ try:
                     if i >= batches:
                         break
 
-                    labels, images = data
-                    print(f"labels shape: {labels}")
-                    print(f"device: {device}")
-
-                    image_sequences = torch.stack(images)
-                    print(f"image_sequences: {image_sequences.shape}")
-                    input_tensor = image_sequences.view(SEQUENCE_LENGTH, BATCH_SIZE, -1)
-                    input_tensor = input_tensor.to(device)
-                    print(f"input_tensor: {input_tensor.shape}")
+                    labels, input_tensor = data
                     input_labels = torch.tensor([CLASSES[l] for l in labels], dtype = torch.long)
+
+                    print(f"device: {device}")
+                    input_tensor = input_tensor.to(device)
                     input_labels = input_labels.to(device)
+                    print(f"input_tensor: {input_tensor.shape}")
+                    print(f"input_labels: {input_labels.shape}")
 
                     # start with clean gradient
                     output_tensor = bilstm.forward(input_tensor)
 
-                    print(output_tensor)
                     # compute loss, gradients and backprop, adjust weights
-                    print(f"output_tensor shape: {output_tensor.shape}")
-                    print(f"input_labels shape: {input_labels.shape}")
+                    print(f"output_tensor: {output_tensor.shape}")
                     loss = lossf(output_tensor, input_labels)
                     optim.zero_grad()
                     loss.backward()
@@ -178,10 +173,10 @@ try:
                     # current predictions
                     _, predicted_labels = torch.max(output_tensor, 1)
                     predicted_props = torch.nn.functional.softmax(output_tensor, dim=1)
-                    print(predicted_props)
-                    print(predicted_labels)
-                    print(input_labels)
-                    print(f"{(predicted_labels == input_labels).sum().item()}/{BATCH_SIZE}")
+                    #print(predicted_props)
+                    #print(predicted_labels)
+                    #print(input_labels)
+                    #print(f"{(predicted_labels == input_labels).sum().item()}/{BATCH_SIZE}")
 
                     # stats
                     epoch_total += BATCH_SIZE

@@ -11,9 +11,9 @@ class BiLSTM(torch.nn.Module):
         self.num_layers: int = num_layers
         self.bias: bool = bias
         self.dropout: float = dropout
-        self.lstm: torch.nn.LSTM = torch.nn.LSTM(self.input_size, self.hidden_size, self.num_layers, self.bias, batch_first=False, dropout=self.dropout, bidirectional=True, proj_size=0)
+        self.lstm: torch.nn.LSTM = torch.nn.LSTM(self.input_size, self.hidden_size, self.num_layers, self.bias, batch_first=True, dropout=self.dropout, bidirectional=True, proj_size=0)
         self.outl: torch.nn.Linear = torch.nn.Linear(2 * hidden_size, num_classes)
     def forward(self, input):
         out, (hn, cn) = self.lstm(input)
-        pooled_out = torch.mean(out, dim = 0)
+        pooled_out = torch.mean(out, dim = 1) # pool along sequence axis
         return self.outl(pooled_out)
