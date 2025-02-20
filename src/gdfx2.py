@@ -152,6 +152,7 @@ try:
 
                     labels, images = data
                     print(f"labels shape: {labels}")
+                    print(f"device: {device}")
 
                     image_sequences = torch.stack(images)
                     print(f"image_sequences: {image_sequences.shape}")
