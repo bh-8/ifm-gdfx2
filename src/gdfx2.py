@@ -173,10 +173,10 @@ try:
                     # current predictions
                     _, predicted_labels = torch.max(output_tensor, 1)
                     predicted_props = torch.nn.functional.softmax(output_tensor, dim=1)
-                    print(predicted_props)
-                    print(predicted_labels)
-                    print(input_labels)
-                    print(f"{(predicted_labels == input_labels).sum().item()}/{BATCH_SIZE}")
+                    #print(predicted_props)
+                    #print(predicted_labels)
+                    #print(input_labels)
+                    #print(f"{(predicted_labels == input_labels).sum().item()}/{BATCH_SIZE}")
 
                     # stats
                     epoch_total += BATCH_SIZE
