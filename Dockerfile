@@ -33,7 +33,7 @@
 #    
 #    ENTRYPOINT ["/home/gdfx2/gdfx2.sh"]
 
-FROM nvidia/cuda:12.2.2-runtime-ubuntu22.04 AS gdfx2
+FROM nvidia/cuda:12.5.1-cudnn-runtime-ubuntu22.04 AS gdfx2
     WORKDIR /home/gdfx2
 
     # python installation
