@@ -1,10 +1,8 @@
+import tensorflow as tf
 import tensorflow_datasets as tfds
-import datasets.df40
+import df40.builder as df40
 
-dataset, dataset_info = tfds.load(
-    "df40",  # Name des Datasets (wie in df40.py definiert)
-    split="train",  # Oder "test"
-    with_info=True,  # Gibt Metadaten zurück
-    data_dir="datasets/"  # Falls du es an einem bestimmten Ort speichern willst
-)
+builder = df40.Builder(local_path="./io/df40")
+builder.download_and_prepare()
 
+df40_train = builder.as_dataset(split="train")
