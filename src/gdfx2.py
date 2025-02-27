@@ -43,23 +43,22 @@ model.summary()
 def one_hot_enc(s, l):
     return s, tf.one_hot(l, len(CLASS_LIST)) # transformation to 3x3
 
-tfds.builder("df40", data_dir=IO_PATH).download_and_prepare()
+#tfds.builder("df40", data_dir=IO_PATH).download_and_prepare()
 
+#df40_train = tfds.load("df40", split="train", as_supervised=True).interleave(
+#    lambda x: tf.data.Dataset.from_tensors(x).map(one_hot_enc),
+#    cycle_length=tf.data.AUTOTUNE,
+#    num_parallel_calls=4
+#).batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
+#
+#df40_test = tfds.load("df40", split="test", as_supervised=True).interleave(
+#    lambda x: tf.data.Dataset.from_tensors(x).map(one_hot_enc),
+#    cycle_length=tf.data.AUTOTUNE,
+#    num_parallel_calls=4
+#).batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
 
-df40_train = tfds.load("df40", split="train", as_supervised=True).interleave(
-    lambda x: tf.data.Dataset.from_tensors(x).map(one_hot_enc),
-    cycle_length=tf.data.AUTOTUNE,
-    num_parallel_calls=tf.data.AUTOTUNE
-).batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
-
-df40_test = tfds.load("df40", split="test", as_supervised=True).interleave(
-    lambda x: tf.data.Dataset.from_tensors(x).map(one_hot_enc),
-    cycle_length=tf.data.AUTOTUNE,
-    num_parallel_calls=tf.data.AUTOTUNE
-).batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
-
-#df40_train = tfds.load("df40", split="train", as_supervised=True).map(one_hot_enc).batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
-#df40_test = tfds.load("df40", split="test", as_supervised=True).map(one_hot_enc).batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
+df40_train = tfds.load("df40", split="train", as_supervised=True).map(one_hot_enc).batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
+df40_test = tfds.load("df40", split="test", as_supervised=True).map(one_hot_enc).batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
 
 
 history = model.fit(df40_train, epochs=EPOCHS, validation_data=df40_test, callbacks=[cp_callback])
