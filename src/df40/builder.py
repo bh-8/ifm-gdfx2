@@ -54,7 +54,7 @@ class Builder(tfds.core.GeneratorBasedBuilder):
                 # gather frames, truncate too long sequences and only use files with name pattern XXX.png
                 sequential_data: list[pl.Path] = sorted([x for x in i.glob("*") if len(x.stem) == 3])[:self.seq_len]
                 if len(sequential_data) >= self.seq_len: # minimum sequence length requirement
-                    yield f"{class_name}_{i.name}", {
+                    yield f"{class_name}_{str(i).split('/')[-3]}_{i.name}", {
                         "sequence": [ # TODO. Warum .numpy() notwendig?
                             tf.image.decode_png(tf.io.read_file(str(x))).numpy() for x in sequential_data
                         ],
