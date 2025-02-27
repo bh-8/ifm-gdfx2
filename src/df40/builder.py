@@ -1,22 +1,21 @@
 import tensorflow_datasets as tfds
 import tensorflow as tf
 import pathlib as pl
-import numpy as np
-
-# Globale Parameter
-IMG_SIZE = (256, 256, 3)
-SEQ_LEN = 8  # 8-32
-CLASSES = ["original", "face_swap", "face_reenact"]
+from parameters import *
 
 class Builder(tfds.core.GeneratorBasedBuilder):
     VERSION = tfds.core.Version("1.0.0")
     RELEASE_NOTES = {
         "1.0.0": "Initial release.",
     }
-
-    def __init__(self, local_path: str):
-        super().__init__()
-        self.local_path: pl.Path = pl.Path(local_path).resolve()
+    # local_path: str, 
+    def __init__(self, data_dir: str):
+        self.local_path: pl.Path = pl.Path(IO_PATH).resolve() / "df40"
+        self.img_size: tuple = IMG_SIZE
+        self.seq_len: int = SEQ_LEN
+        self.batch_size: int = BATCH_SIZE
+        self.class_list: list[str] = CLASS_LIST
+        super().__init__(data_dir=str(pl.Path(IO_PATH).resolve() / "tfcache"))
 
     def _info(self):
         return tfds.core.DatasetInfo(
@@ -24,10 +23,10 @@ class Builder(tfds.core.GeneratorBasedBuilder):
             description="TensorFlow Dataset für DF40 mit Bildsequenzen zur Klassifikation.",
             features=tfds.features.FeaturesDict({
                 "sequence": tfds.features.Sequence(
-                    tfds.features.Image(shape=IMG_SIZE),
-                    length = SEQ_LEN
+                    tfds.features.Image(shape=self.img_size),
+                    length = self.seq_len
                 ),
-                "label": tfds.features.ClassLabel(names=CLASSES),
+                "label": tfds.features.ClassLabel(names=self.class_list)
             }),
             supervised_keys=("sequence", "label"),
             homepage="https://github.com/YZY-stack/DF40",
@@ -35,14 +34,15 @@ class Builder(tfds.core.GeneratorBasedBuilder):
         )
 
     def _split_generators(self, dl_manager):
+
         return {
             "train": self._generate_examples(pl.Path(self.local_path) / "train"),
-            "test": self._generate_examples(pl.Path(self.local_path) / "test"),
+            "test": self._generate_examples(pl.Path(self.local_path) / "test")
         }
 
     def _generate_examples(self, split_path):
         """Erzeugt Sequenz-Items aus den Bildordnern."""
-        for class_id, class_name in enumerate(CLASSES):
+        for class_id, class_name in enumerate(self.class_list):
             class_path: pl.Path = pl.Path(split_path) / class_name
 
             if not class_path.exists():
@@ -52,10 +52,11 @@ class Builder(tfds.core.GeneratorBasedBuilder):
             # loop folders containing a frame sequence each
             for i in sorted([e for e in class_path.glob("**/") if e.match("frames/*")]):
                 # gather frames, truncate too long sequences and only use files with name pattern XXX.png
-                sequential_data: list[pl.Path] = sorted([x for x in i.glob("*") if len(x.stem) == 3])[:SEQ_LEN]
-                if len(sequential_data) >= SEQ_LEN: # minimum sequence length requirement
+                sequential_data: list[pl.Path] = sorted([x for x in i.glob("*") if len(x.stem) == 3])[:self.seq_len]
+                if len(sequential_data) >= self.seq_len: # minimum sequence length requirement
                     yield f"{class_name}_{i.name}", {
-                        "sequence": [
+                        "sequence": [ # TODO. Warum .numpy() notwendig?
                             tf.image.decode_png(tf.io.read_file(str(x))).numpy() for x in sequential_data
-                        ], "label": class_name
+                        ],
+                        "label": class_name
                     }
