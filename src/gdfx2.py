@@ -1,6 +1,7 @@
 import tensorflow as tf
 import tensorflow.keras.layers as ly
 import tensorflow_datasets as tfds
+import numpy as np
 
 from pathlib import Path
 from parameters import *
@@ -83,10 +84,12 @@ model.summary()
 
 print("##################################################")
 
-import numpy as np
-labels, counts = np.unique(np.fromiter(train_dataset.map(lambda x, y: y), np.int32), return_counts=True)
 
-print(labels, counts)
+t = [np.argmax(y, axis = -1) for x, y in train_dataset]
+print(t)
+print(len(t))
+
+
 
 #history = model.fit(train_dataset, epochs=EPOCHS, validation_data=test_dataset, callbacks=[cp_callback])
 
