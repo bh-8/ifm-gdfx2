@@ -83,7 +83,7 @@ model.summary()
 
 print("##################################################")
 
-
+import numpy as np
 labels, counts = np.unique(np.fromiter(train_dataset.map(lambda x, y: y), np.int32), return_counts=True)
 
 print(labels, counts)
