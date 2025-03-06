@@ -41,11 +41,11 @@ def df40_load_and_preprocess(path_sequence: list[Path], label: int):
 train_sequences, train_labels = df40_list_labeled_items(Path(DATASET_PATH + "/train").resolve())
 test_sequences, test_labels = df40_list_labeled_items(Path(DATASET_PATH + "/test").resolve())
 
-print(train_sequences)
-print(train_labels)
+train_dataset = tf.data.Dataset.from_tensor_slices((train_sequences, train_labels))
+test_dataset = tf.data.Dataset.from_tensor_slices((test_sequences, test_labels))
 
-#train_dataset = tf.data.Dataset.from_tensor_slices((train_sequences, train_labels))
-#test_dataset = tf.data.Dataset.from_tensor_slices((test_sequences, test_labels))
+print(train_dataset)
+print(len(train_dataset))
 
 #train_dataset = train_dataset.map(df40_load_and_preprocess, num_parallel_calls=tf.data.AUTOTUNE)
 #test_dataset = test_dataset.map(df40_load_and_preprocess, num_parallel_calls=tf.data.AUTOTUNE)
