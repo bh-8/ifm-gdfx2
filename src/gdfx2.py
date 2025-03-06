@@ -5,7 +5,7 @@ import tensorflow_datasets as tfds
 from pathlib import Path
 from parameters import *
 
-#print(tf.config.list_physical_devices('GPU'))
+print(tf.config.list_physical_devices('GPU'))
 
 # DATASET STUFF
 
@@ -25,15 +25,6 @@ def df40_list_labeled_items(split_path: Path):
                 list_labels.append(class_id)
     return list_sequences, list_labels
 
-#def df40_load_and_preprocess(path_sequence: list[str], label: int):
-#    def _load_images(paths):
-#        images = [ _load_image(p.numpy().decode("utf-8")) for p in paths]
-#        return tf.stack(images)
-
-#    images = tf.py_function(func=_load_images, inp=[path_sequence], Tout=tf.float32)
-#    images.set_shape((SEQ_LEN, 256, 256, 3))  # Manuelles Setzen der Shape
-#    return images, tf.one_hot(label, len(CLASS_LIST))
-
 def df40_load_and_preprocess(path_sequence: list[str], label: int):
     def _load_image(image_path: str):
         image = tf.io.read_file(image_path)
@@ -42,7 +33,8 @@ def df40_load_and_preprocess(path_sequence: list[str], label: int):
         image = image / 255.0
         return image
 
-    return tf.map_fn(_load_image, path_sequence), tf.one_hot(label, len(CLASS_LIST))
+    return tf.stack([_load_image(elem) for elem in tf.unstack(path_sequence)]), tf.one_hot(label, len(CLASS_LIST))
+    #return tf.map_fn(_load_image, path_sequence), tf.one_hot(label, len(CLASS_LIST))
 
 train_sequences, train_labels = df40_list_labeled_items(Path(IO_PATH + "/df40/train").resolve())
 test_sequences, test_labels = df40_list_labeled_items(Path(IO_PATH + "/df40/test").resolve())
@@ -53,8 +45,8 @@ test_dataset = tf.data.Dataset.from_tensor_slices((test_sequences, test_labels))
 train_dataset = train_dataset.map(df40_load_and_preprocess, num_parallel_calls=tf.data.AUTOTUNE)
 test_dataset = test_dataset.map(df40_load_and_preprocess, num_parallel_calls=tf.data.AUTOTUNE)
 
-train_dataset = train_dataset.batch(16).shuffle(100).prefetch(tf.data.AUTOTUNE)
-test_dataset = test_dataset.batch(16).prefetch(tf.data.AUTOTUNE)
+train_dataset = train_dataset.batch(BATCH_SIZE).shuffle(100).prefetch(tf.data.AUTOTUNE)
+test_dataset = test_dataset.batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
 
 # MODEL STUFF
 
@@ -69,7 +61,7 @@ def create_model():
     resnet50.trainable = False # freeze weights
 
     model = tf.keras.Sequential([
-        ly.Input(shape=(SEQ_LEN, *IMG_SIZE)), # , batch_size=BATCH_SIZE input shape is (BATCH_SIZE, SEQ_LEN, *IMG_SIZE)
+        ly.Input(shape=(SEQ_LEN, *IMG_SIZE)),
         ly.TimeDistributed(
             resnet50, name="resnet"
         ), ly.TimeDistributed(
