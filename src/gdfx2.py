@@ -67,10 +67,12 @@ test_dataset_classes = np.concatenate([np.argmax(y, axis = -1) for x, y in test_
 print("Train Dataset:")
 for i, c in enumerate(CLASS_LIST):
     print(f" {i} {c} -> {(train_dataset_classes == i).sum()}")
+print(train_dataset_classes)
 
 print("Test Dataset:")
 for i, c in enumerate(CLASS_LIST):
     print(f" {i} {c} -> {(test_dataset_classes == i).sum()}")
+print(test_dataset_classes)
 
 # MODEL STUFF
 
