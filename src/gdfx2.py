@@ -46,11 +46,11 @@ test_dataset = tf.data.Dataset.from_tensor_slices((test_sequences, test_labels))
 train_dataset = train_dataset.map(df40_load_and_preprocess, num_parallel_calls=tf.data.AUTOTUNE)
 test_dataset = test_dataset.map(df40_load_and_preprocess, num_parallel_calls=tf.data.AUTOTUNE)
 
+train_dataset = train_dataset.batch(16).shuffle(100).prefetch(tf.data.AUTOTUNE)
+test_dataset = test_dataset.batch(16).prefetch(tf.data.AUTOTUNE)
+
 print(train_dataset)
 print(len(train_dataset))
-
-#train_dataset = train_dataset.batch(16).shuffle(100).prefetch(tf.data.AUTOTUNE)
-#test_dataset = test_dataset.batch(16).prefetch(tf.data.AUTOTUNE)
 
 import sys
 sys.exit(0)
