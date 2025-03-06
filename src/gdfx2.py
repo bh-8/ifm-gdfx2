@@ -44,7 +44,7 @@ test_dataset = tf.data.Dataset.from_tensor_slices((test_sequences, test_labels))
 train_dataset = train_dataset.map(df40_load_and_preprocess, num_parallel_calls=tf.data.AUTOTUNE)
 test_dataset = test_dataset.map(df40_load_and_preprocess, num_parallel_calls=tf.data.AUTOTUNE)
 
-train_dataset = train_dataset.batch(BATCH_SIZE).shuffle(BATCH_SIZE * 10).prefetch(tf.data.AUTOTUNE)
+train_dataset = train_dataset.batch(BATCH_SIZE).shuffle(BATCH_SIZE * 16).prefetch(tf.data.AUTOTUNE)
 test_dataset = test_dataset.batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
 
 print("##################################################")
