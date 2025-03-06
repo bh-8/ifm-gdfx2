@@ -3,4 +3,4 @@ IO_PATH = "./io"
 IMG_SIZE = (256, 256, 3)
 SEQ_LEN = 8
 BATCH_SIZE = 12
-EPOCHS = 3
+EPOCHS = 1
