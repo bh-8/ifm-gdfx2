@@ -32,13 +32,10 @@ def df40_load_and_preprocess(path_sequence: list[str], label: int):
         image = tf.io.read_file(image_path)
         image = tf.image.decode_png(image, channels=3)
         image = tf.image.resize(image, [256, 256])
-        #image = tf.cast(image, tf.float32)
         image = image / 255.0
         return image
 
-    image_sequence = tf.map_fn(_load_image, path_sequence, dtype=tf.float32)
-    return image_sequence, label
-
+    return tf.map_fn(_load_image, path_sequence, dtype=tf.float32), tf.one_hot(label, len(CLASS_LIST))
 
 train_sequences, train_labels = df40_list_labeled_items(Path(DATASET_PATH + "/train").resolve())
 test_sequences, test_labels = df40_list_labeled_items(Path(DATASET_PATH + "/test").resolve())
