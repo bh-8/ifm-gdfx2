@@ -33,9 +33,7 @@ def df40_load_and_preprocess(path_sequence: list[str], label: int):
         image = tf.image.resize(image, [256, 256])
         image = image / 255.0
         return image
-
     return tf.stack([_load_image(elem) for elem in tf.unstack(path_sequence)]), tf.one_hot(label, len(CLASS_LIST))
-    #return tf.map_fn(_load_image, path_sequence), tf.one_hot(label, len(CLASS_LIST))
 
 train_sequences, train_labels = df40_list_labeled_items(Path(IO_PATH + "/df40/train").resolve())
 test_sequences, test_labels = df40_list_labeled_items(Path(IO_PATH + "/df40/test").resolve())
@@ -48,6 +46,19 @@ test_dataset = test_dataset.map(df40_load_and_preprocess, num_parallel_calls=tf.
 
 train_dataset = train_dataset.batch(BATCH_SIZE).shuffle(BATCH_SIZE * 16).prefetch(tf.data.AUTOTUNE)
 test_dataset = test_dataset.batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
+
+print("##################################################")
+
+train_dataset_classes = np.concatenate([np.argmax(y, axis = -1) for x, y in train_dataset], axis = 0)
+test_dataset_classes = np.concatenate([np.argmax(y, axis = -1) for x, y in test_dataset], axis = 0)
+
+print("Train Dataset:")
+for i, c in enumerate(CLASS_LIST):
+    print(f" {i} {c} -> {(train_dataset_classes == i).sum()}")
+
+print("Test Dataset:")
+for i, c in enumerate(CLASS_LIST):
+    print(f" {i} {c} -> {(test_dataset_classes == i).sum()}")
 
 # MODEL STUFF
 
@@ -74,23 +85,19 @@ def create_model():
     model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy"])
     return model
 
+print("##################################################")
+
 model = create_model()
 model.summary()
-#model.save_weights((IO_PATH + "/model.weights.h5").format(epoch=0))
-#model.load_weights(IO_PATH + "/model.weights.h5")
 
+if Path(IO_PATH + "/model.weights.h5").exists():
+    model.load_weights(IO_PATH + "/model.weights.h5")
+    print(f"Loaded initial weights from '{IO_PATH + '/model.weights.h5'}'")
 
 # TRAINING STUFF
 
-print("##################################################")
-
-
-train_dataset_classes = np.concatenate([np.argmax(y, axis = -1) for x, y in train_dataset], axis = 0)
-
-for i, c in enumerate(CLASS_LIST):
-    print(f" {i} {c} -> {(train_dataset_classes == i).sum()}")
-
-#history = model.fit(train_dataset, epochs=EPOCHS, validation_data=test_dataset, callbacks=[cp_callback])
+history = model.fit(train_dataset, epochs=EPOCHS, validation_data=test_dataset, callbacks=[cp_callback])
+model.save_weights((IO_PATH + "/model.weights_ps.h5").format(epoch=0))
 
 # TODO: Lernrate/WeightDecay/DropOut und Optimierungen aus altem Src übernehmen
 # TODO: https://www.tensorflow.org/tutorials/keras/save_and_load
