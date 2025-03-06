@@ -12,6 +12,8 @@ from parameters import *
 # DATASET STUFF
 
 def df40_list_labeled_items(split_path: Path):
+    list_sequences: list[list[Path]] = []
+    list_labels: list[int] = []
     for class_id, class_name in enumerate(CLASS_LIST):
         class_path: Path = Path(split_path) / class_name
         if not class_path.exists():
@@ -21,7 +23,9 @@ def df40_list_labeled_items(split_path: Path):
         for i in sorted([e for e in class_path.glob("**/") if e.match("frames/*")]):
             sequential_data: list[Path] = sorted([x for x in i.glob("*")])[:SEQ_LEN]
             if len(sequential_data) >= SEQ_LEN: # minimum sequence length requirement
-                yield sequential_data, class_id
+                list_sequences.append(sequential_data)
+                list_labels.append(class_id)
+    return list_sequences, list_labels
 
 def df40_load_and_preprocess(path_sequence: list[Path], label: int):
     def _load_image(image_path: Path):
