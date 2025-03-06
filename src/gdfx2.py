@@ -30,8 +30,9 @@ def df40_list_labeled_items(split_path: Path):
 def df40_load_and_preprocess(path_sequence: list[str], label: int):
     def _load_image(image_path: str):
         image = tf.io.read_file(image_path)
-        image = tf.image.decode_png(image)
-        image = tf.cast(image, tf.float32)
+        image = tf.image.decode_png(image, channels=3)
+        image = tf.image.resize(image, [256, 256])
+        #image = tf.cast(image, tf.float32)
         image = image / 255.0
         return image
 
