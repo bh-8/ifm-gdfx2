@@ -44,11 +44,11 @@ test_sequences, test_labels = df40_list_labeled_items(Path(DATASET_PATH + "/test
 train_dataset = tf.data.Dataset.from_tensor_slices((train_sequences, train_labels))
 test_dataset = tf.data.Dataset.from_tensor_slices((test_sequences, test_labels))
 
+train_dataset = train_dataset.map(df40_load_and_preprocess, num_parallel_calls=tf.data.AUTOTUNE)
+test_dataset = test_dataset.map(df40_load_and_preprocess, num_parallel_calls=tf.data.AUTOTUNE)
+
 print(train_dataset)
 print(len(train_dataset))
-
-#train_dataset = train_dataset.map(df40_load_and_preprocess, num_parallel_calls=tf.data.AUTOTUNE)
-#test_dataset = test_dataset.map(df40_load_and_preprocess, num_parallel_calls=tf.data.AUTOTUNE)
 
 #train_dataset = train_dataset.batch(16).shuffle(100).prefetch(tf.data.AUTOTUNE)
 #test_dataset = test_dataset.batch(16).prefetch(tf.data.AUTOTUNE)
