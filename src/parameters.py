@@ -1,6 +1,3 @@
-
-DATASET_PATH = "./io/df40"
-
 CLASS_LIST = ["original", "face_swap", "face_reenact"]
 IO_PATH = "./io"
 IMG_SIZE = (256, 256, 3)

@@ -35,10 +35,10 @@ def df40_load_and_preprocess(path_sequence: list[str], label: int):
         image = image / 255.0
         return image
 
-    return tf.map_fn(_load_image, path_sequence, dtype=tf.float32), tf.one_hot(label, len(CLASS_LIST))
+    return tf.map_fn(_load_image, path_sequence), tf.one_hot(label, len(CLASS_LIST))
 
-train_sequences, train_labels = df40_list_labeled_items(Path(DATASET_PATH + "/train").resolve())
-test_sequences, test_labels = df40_list_labeled_items(Path(DATASET_PATH + "/test").resolve())
+train_sequences, train_labels = df40_list_labeled_items(Path(IO_PATH + "/df40/train").resolve())
+test_sequences, test_labels = df40_list_labeled_items(Path(IO_PATH + "/df40/test").resolve())
 
 train_dataset = tf.data.Dataset.from_tensor_slices((train_sequences, train_labels))
 test_dataset = tf.data.Dataset.from_tensor_slices((test_sequences, test_labels))
@@ -48,12 +48,6 @@ test_dataset = test_dataset.map(df40_load_and_preprocess, num_parallel_calls=tf.
 
 train_dataset = train_dataset.batch(16).shuffle(100).prefetch(tf.data.AUTOTUNE)
 test_dataset = test_dataset.batch(16).prefetch(tf.data.AUTOTUNE)
-
-print(train_dataset)
-print(len(train_dataset))
-
-import sys
-sys.exit(0)
 
 # MODEL STUFF
 
@@ -88,8 +82,8 @@ model.summary()
 
 # TRAINING STUFF
 
-def one_hot_enc(s, l):
-    return s, tf.one_hot(l, len(CLASS_LIST)) # transformation to 3x3
+#def one_hot_enc(s, l):
+#    return s, tf.one_hot(l, len(CLASS_LIST)) # transformation to 3x3
 
 #tfds.builder("df40", data_dir=IO_PATH).download_and_prepare()
 
@@ -105,11 +99,11 @@ def one_hot_enc(s, l):
 #    num_parallel_calls=4
 #).batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
 
-df40_train = tfds.load("df40", split="train", as_supervised=True).map(one_hot_enc).batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
-df40_test = tfds.load("df40", split="test", as_supervised=True).map(one_hot_enc).batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
+#df40_train = tfds.load("df40", split="train", as_supervised=True).map(one_hot_enc).batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
+#df40_test = tfds.load("df40", split="test", as_supervised=True).map(one_hot_enc).batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
 
 
-history = model.fit(df40_train, epochs=EPOCHS, validation_data=df40_test, callbacks=[cp_callback])
+history = model.fit(train_dataset, epochs=EPOCHS, validation_data=test_dataset, callbacks=[cp_callback])
 
 # TODO: Normalisierung von Bildwerten..?
 # TODO: Lernrate/WeightDecay/DropOut und Optimierungen aus altem Src übernehmen
