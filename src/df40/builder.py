@@ -42,7 +42,7 @@ class Builder(tfds.core.GeneratorBasedBuilder):
 
     def _generate_examples(self, split_path):
         """Erzeugt Sequenz-Items aus den Bildordnern."""
-        for class_id, class_name in enumerate(self.class_list):
+        for class_id, class_name in enumerate(CLASS_LIST):
             class_path: pl.Path = pl.Path(split_path) / class_name
 
             if not class_path.exists():

@@ -2,10 +2,55 @@ import tensorflow as tf
 import tensorflow.keras.layers as ly
 import tensorflow_datasets as tfds
 
+from pathlib import Path
+
 import df40.builder as df40
 from parameters import *
 
 #print(tf.config.list_physical_devices('GPU'))
+
+# DATASET STUFF
+
+def df40_list_labeled_items(split_path: Path):
+    for class_id, class_name in enumerate(CLASS_LIST):
+        class_path: Path = Path(split_path) / class_name
+        if not class_path.exists():
+            print(f"E {class_path} does not exists!")
+            continue
+        # gather and sort frames, truncate too long sequences
+        for i in sorted([e for e in class_path.glob("**/") if e.match("frames/*")]):
+            sequential_data: list[Path] = sorted([x for x in i.glob("*")])[:SEQ_LEN]
+            if len(sequential_data) >= SEQ_LEN: # minimum sequence length requirement
+                yield sequential_data, class_id
+
+def df40_load_and_preprocess(path_sequence: list[Path], label: int):
+    def _load_image(image_path: Path):
+        image = tf.io.read_file(image_path)
+        image = tf.image.decode_png(image)
+        image = image / 255.0
+        return image
+
+    image_sequence = tf.map_fn(_load_image, path_sequence, dtype=tf.float32)
+    return image_sequence, label
+
+
+train_sequences, train_labels = df40_list_labeled_items(Path(DATASET_PATH + "/train").resolve())
+test_sequences, test_labels = df40_list_labeled_items(Path(DATASET_PATH + "/test").resolve())
+
+print(train_sequences)
+print(train_labels)
+
+#train_dataset = tf.data.Dataset.from_tensor_slices((train_sequences, train_labels))
+#test_dataset = tf.data.Dataset.from_tensor_slices((test_sequences, test_labels))
+
+#train_dataset = train_dataset.map(df40_load_and_preprocess, num_parallel_calls=tf.data.AUTOTUNE)
+#test_dataset = test_dataset.map(df40_load_and_preprocess, num_parallel_calls=tf.data.AUTOTUNE)
+
+#train_dataset = train_dataset.batch(16).shuffle(100).prefetch(tf.data.AUTOTUNE)
+#test_dataset = test_dataset.batch(16).prefetch(tf.data.AUTOTUNE)
+
+import sys
+sys.exit(0)
 
 # MODEL STUFF
 
