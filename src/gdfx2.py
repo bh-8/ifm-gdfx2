@@ -1,7 +1,7 @@
 import tensorflow as tf
 import tensorflow.keras.layers as ly
 import tensorflow_datasets as tfds
-import numpy as np
+import random
 
 from pathlib import Path
 from parameters import *
@@ -40,13 +40,24 @@ def df40_load_and_preprocess(path_sequence: list[str], label: int):
 train_sequences, train_labels = df40_list_labeled_items(Path(IO_PATH + "/df40/train").resolve())
 test_sequences, test_labels = df40_list_labeled_items(Path(IO_PATH + "/df40/test").resolve())
 
+###
+train_data = list(zip(train_sequences, train_labels))
+test_data = list(zip(test_sequences, test_labels))
+random.shuffle(train_data)
+random.shuffle(test_data)
+train_sequences, train_labels = zip(*train_data)
+test_sequences, test_labels = zip(*test_data)
+train_sequences, train_labels = list(train_sequences), list(train_labels)
+test_sequences, test_labels = list(test_sequences), list(test_labels)
+###
+
 train_dataset = tf.data.Dataset.from_tensor_slices((train_sequences, train_labels))
 test_dataset = tf.data.Dataset.from_tensor_slices((test_sequences, test_labels))
 
 train_dataset = train_dataset.map(df40_load_and_preprocess, num_parallel_calls=tf.data.AUTOTUNE)
 test_dataset = test_dataset.map(df40_load_and_preprocess, num_parallel_calls=tf.data.AUTOTUNE)
 
-train_dataset = train_dataset.batch(BATCH_SIZE).shuffle(BATCH_SIZE * 16).prefetch(tf.data.AUTOTUNE)
+train_dataset = train_dataset.batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE) # .shuffle(BATCH_SIZE * 16) NACH BATCH
 test_dataset = test_dataset.batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
 
 train_dataset_classes = np.concatenate([np.argmax(y, axis = -1) for x, y in train_dataset], axis = 0)
