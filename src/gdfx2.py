@@ -10,6 +10,8 @@ print(tf.config.list_physical_devices('GPU'))
 
 # DATASET STUFF
 
+print("############################## DATASET ##############################")
+
 def df40_list_labeled_items(split_path: Path):
     list_sequences: list[list[str]] = []
     list_labels: list[int] = []
@@ -47,8 +49,6 @@ test_dataset = test_dataset.map(df40_load_and_preprocess, num_parallel_calls=tf.
 train_dataset = train_dataset.batch(BATCH_SIZE).shuffle(BATCH_SIZE * 16).prefetch(tf.data.AUTOTUNE)
 test_dataset = test_dataset.batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
 
-print("##################################################")
-
 train_dataset_classes = np.concatenate([np.argmax(y, axis = -1) for x, y in train_dataset], axis = 0)
 test_dataset_classes = np.concatenate([np.argmax(y, axis = -1) for x, y in test_dataset], axis = 0)
 
@@ -61,6 +61,8 @@ for i, c in enumerate(CLASS_LIST):
     print(f" {i} {c} -> {(test_dataset_classes == i).sum()}")
 
 # MODEL STUFF
+
+print("############################## MODEL ##############################")
 
 cp_callback = tf.keras.callbacks.ModelCheckpoint(
     filepath=IO_PATH + "/model.weights.h5",
@@ -85,8 +87,6 @@ def create_model():
     model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy"])
     return model
 
-print("##################################################")
-
 model = create_model()
 model.summary()
 
@@ -95,6 +95,8 @@ if Path(IO_PATH + "/model.weights.h5").exists():
     print(f"Loaded initial weights from '{IO_PATH + '/model.weights.h5'}'")
 
 # TRAINING STUFF
+
+print("############################## TRAINING ##############################")
 
 history = model.fit(train_dataset, epochs=EPOCHS, validation_data=test_dataset, callbacks=[cp_callback])
 model.save_weights((IO_PATH + "/model_ps.weights.h5").format(epoch=0))
