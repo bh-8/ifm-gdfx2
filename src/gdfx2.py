@@ -35,7 +35,7 @@ def df40_load_and_preprocess(path_sequence: list[str], label: int):
         image = image / 255.0
         return image
 
-    return tf.map_fn(_load_image, path_sequence), tf.one_hot(label, len(CLASS_LIST))
+    return tf.map_fn(_load_image, path_sequence), label # tf.one_hot(label, len(CLASS_LIST))
 
 train_sequences, train_labels = df40_list_labeled_items(Path(IO_PATH + "/df40/train").resolve())
 test_sequences, test_labels = df40_list_labeled_items(Path(IO_PATH + "/df40/test").resolve())
