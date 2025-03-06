@@ -113,7 +113,6 @@ if Path(IO_PATH + "/model.weights.h5").exists():
 print("############################## TRAINING ##############################")
 
 history = model.fit(train_dataset, epochs=EPOCHS, validation_data=test_dataset, callbacks=[cp_callback])
-model.save_weights((IO_PATH + "/model_ps.weights.h5").format(epoch=0))
 
 # TODO: Lernrate/WeightDecay/DropOut und Optimierungen aus altem Src übernehmen
 # TODO: https://www.tensorflow.org/tutorials/keras/save_and_load
