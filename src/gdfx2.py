@@ -85,7 +85,7 @@ model.summary()
 print("##################################################")
 
 
-t = [np.argmax(y, axis = -1) for x, y in train_dataset]
+t = np.concatenate([np.argmax(y, axis = -1) for x, y in train_dataset], axis = 0)
 print(t)
 print(len(t))
 
