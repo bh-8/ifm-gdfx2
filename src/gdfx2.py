@@ -3,8 +3,6 @@ import tensorflow.keras.layers as ly
 import tensorflow_datasets as tfds
 
 from pathlib import Path
-
-import df40.builder as df40
 from parameters import *
 
 #print(tf.config.list_physical_devices('GPU'))
@@ -26,6 +24,15 @@ def df40_list_labeled_items(split_path: Path):
                 list_sequences.append(sequential_data)
                 list_labels.append(class_id)
     return list_sequences, list_labels
+
+#def df40_load_and_preprocess(path_sequence: list[str], label: int):
+#    def _load_images(paths):
+#        images = [ _load_image(p.numpy().decode("utf-8")) for p in paths]
+#        return tf.stack(images)
+
+#    images = tf.py_function(func=_load_images, inp=[path_sequence], Tout=tf.float32)
+#    images.set_shape((SEQ_LEN, 256, 256, 3))  # Manuelles Setzen der Shape
+#    return images, tf.one_hot(label, len(CLASS_LIST))
 
 def df40_load_and_preprocess(path_sequence: list[str], label: int):
     def _load_image(image_path: str):
@@ -82,29 +89,8 @@ model.summary()
 
 # TRAINING STUFF
 
-#def one_hot_enc(s, l):
-#    return s, tf.one_hot(l, len(CLASS_LIST)) # transformation to 3x3
-
-#tfds.builder("df40", data_dir=IO_PATH).download_and_prepare()
-
-#df40_train = tfds.load("df40", split="train", as_supervised=True).interleave(
-#    lambda x: tf.data.Dataset.from_tensors(x).map(one_hot_enc),
-#    cycle_length=tf.data.AUTOTUNE,
-#    num_parallel_calls=4
-#).batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
-#
-#df40_test = tfds.load("df40", split="test", as_supervised=True).interleave(
-#    lambda x: tf.data.Dataset.from_tensors(x).map(one_hot_enc),
-#    cycle_length=tf.data.AUTOTUNE,
-#    num_parallel_calls=4
-#).batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
-
-#df40_train = tfds.load("df40", split="train", as_supervised=True).map(one_hot_enc).batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
-#df40_test = tfds.load("df40", split="test", as_supervised=True).map(one_hot_enc).batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
-
 
 history = model.fit(train_dataset, epochs=EPOCHS, validation_data=test_dataset, callbacks=[cp_callback])
 
-# TODO: Normalisierung von Bildwerten..?
 # TODO: Lernrate/WeightDecay/DropOut und Optimierungen aus altem Src übernehmen
 # TODO: https://www.tensorflow.org/tutorials/keras/save_and_load
