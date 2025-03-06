@@ -90,7 +90,7 @@ train_dataset_classes = np.concatenate([np.argmax(y, axis = -1) for x, y in trai
 for i, c in enumerate(CLASS_LIST):
     print(f" {i} {c} -> {train_dataset_classes.count(i)}")
 
-history = model.fit(train_dataset, epochs=EPOCHS, validation_data=test_dataset, callbacks=[cp_callback])
+#history = model.fit(train_dataset, epochs=EPOCHS, validation_data=test_dataset, callbacks=[cp_callback])
 
 # TODO: Lernrate/WeightDecay/DropOut und Optimierungen aus altem Src übernehmen
 # TODO: https://www.tensorflow.org/tutorials/keras/save_and_load
