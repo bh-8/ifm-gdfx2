@@ -81,8 +81,14 @@ model.summary()
 
 # TRAINING STUFF
 
+print("##################################################")
 
-history = model.fit(train_dataset, epochs=EPOCHS, validation_data=test_dataset, callbacks=[cp_callback])
+
+labels, counts = np.unique(np.fromiter(train_dataset.map(lambda x, y: y), np.int32), return_counts=True)
+
+print(labels, counts)
+
+#history = model.fit(train_dataset, epochs=EPOCHS, validation_data=test_dataset, callbacks=[cp_callback])
 
 # TODO: Lernrate/WeightDecay/DropOut und Optimierungen aus altem Src übernehmen
 # TODO: https://www.tensorflow.org/tutorials/keras/save_and_load
