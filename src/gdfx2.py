@@ -12,7 +12,7 @@ from parameters import *
 # DATASET STUFF
 
 def df40_list_labeled_items(split_path: Path):
-    list_sequences: list[list[Path]] = []
+    list_sequences: list[list[str]] = []
     list_labels: list[int] = []
     for class_id, class_name in enumerate(CLASS_LIST):
         class_path: Path = Path(split_path) / class_name
@@ -21,14 +21,14 @@ def df40_list_labeled_items(split_path: Path):
             continue
         # gather and sort frames, truncate too long sequences
         for i in sorted([e for e in class_path.glob("**/") if e.match("frames/*")]):
-            sequential_data: list[Path] = sorted([x for x in i.glob("*")])[:SEQ_LEN]
+            sequential_data: list[str] = sorted([str(x) for x in i.glob("*")])[:SEQ_LEN]
             if len(sequential_data) >= SEQ_LEN: # minimum sequence length requirement
                 list_sequences.append(sequential_data)
                 list_labels.append(class_id)
     return list_sequences, list_labels
 
-def df40_load_and_preprocess(path_sequence: list[Path], label: int):
-    def _load_image(image_path: Path):
+def df40_load_and_preprocess(path_sequence: list[str], label: int):
+    def _load_image(image_path: str):
         image = tf.io.read_file(image_path)
         image = tf.image.decode_png(image)
         image = image / 255.0
