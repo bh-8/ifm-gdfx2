@@ -88,7 +88,7 @@ print("##################################################")
 train_dataset_classes = np.concatenate([np.argmax(y, axis = -1) for x, y in train_dataset], axis = 0)
 
 for i, c in enumerate(CLASS_LIST):
-    print(f" {i} {c} -> {train_dataset_classes.count(i)}")
+    print(f" {i} {c} -> {(train_dataset_classes == i).sum()}")
 
 #history = model.fit(train_dataset, epochs=EPOCHS, validation_data=test_dataset, callbacks=[cp_callback])
 
