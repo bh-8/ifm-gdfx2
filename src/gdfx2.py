@@ -1,6 +1,7 @@
 import tensorflow as tf
 import tensorflow.keras.layers as ly
 import tensorflow_datasets as tfds
+import numpy as np
 import random
 
 from pathlib import Path
