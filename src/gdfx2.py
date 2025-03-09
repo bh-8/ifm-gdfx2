@@ -94,7 +94,7 @@ def create_model():
             ly.LSTM(128), name="bilstm"
         ), ly.Dense(len(CLASS_LIST), activation="softmax")
     ])
-    model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy", "precision", "recall", "f1score", "auc"])
+    model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy", "precision", "recall", "f1_score", "auc"])
     return model
 
 model = create_model()
