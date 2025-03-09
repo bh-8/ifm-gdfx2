@@ -1,29 +1,34 @@
+import numpy as np
+import pathlib as pl
+import random
 import tensorflow as tf
 import tensorflow.keras.layers as ly
 import tensorflow_datasets as tfds
-import numpy as np
-import random
 
-from pathlib import Path
-from parameters import *
+CLASS_LIST = ["original", "face_swap", "face_reenact"]
+IO_PATH = "./io"
+IMG_SIZE = (256, 256, 3)
+SEQ_LEN = 8
+BATCH_SIZE = 12
+EPOCHS = 5
 
 print(tf.config.list_physical_devices('GPU'))
 
 print("############################## DATASET ##############################")
 
-def df40_list_labeled_items(split_path: Path):
+def df40_list_labeled_items(split_path: pl.Path):
     list_sequences: list[list[str]] = []
     list_labels: list[int] = []
     for class_id, class_name in enumerate(CLASS_LIST):
-        class_path: Path = Path(split_path) / class_name
+        class_path: pl.Path = pl.Path(split_path) / class_name
         if not class_path.exists():
             print(f"E {class_path} does not exists!")
             continue
         # gather and sort frames, truncate too long sequences
         for i in sorted([e for e in class_path.glob("**/") if e.match("frames/*")]):
-            sequential_data: list[str] = sorted([str(x) for x in i.glob("*")])[:SEQ_LEN]
+            sequential_paths: list[pl.Path] = sorted([f for f in i.glob("*")], key = lambda x : int(x.stem))[:SEQ_LEN]
             if len(sequential_data) >= SEQ_LEN: # minimum sequence length requirement
-                list_sequences.append(sequential_data)
+                list_sequences.append([str(x) for x in sequential_paths])
                 list_labels.append(class_id)
     return list_sequences, list_labels
 
@@ -36,8 +41,8 @@ def df40_load_and_preprocess(path_sequence: list[str], label: int):
         return image
     return tf.stack([_load_image(elem) for elem in tf.unstack(path_sequence)]), tf.one_hot(label, len(CLASS_LIST))
 
-train_sequences, train_labels = df40_list_labeled_items(Path(IO_PATH + "/df40/train").resolve())
-test_sequences, test_labels = df40_list_labeled_items(Path(IO_PATH + "/df40/test").resolve())
+train_sequences, train_labels = df40_list_labeled_items(pl.Path(IO_PATH + "/df40/train").resolve())
+test_sequences, test_labels = df40_list_labeled_items(pl.Path(IO_PATH + "/df40/test").resolve())
 
 ###
 train_data = list(zip(train_sequences, train_labels))
@@ -56,7 +61,7 @@ test_dataset = tf.data.Dataset.from_tensor_slices((test_sequences, test_labels))
 train_dataset = train_dataset.map(df40_load_and_preprocess, num_parallel_calls=tf.data.AUTOTUNE)
 test_dataset = test_dataset.map(df40_load_and_preprocess, num_parallel_calls=tf.data.AUTOTUNE)
 
-train_dataset = train_dataset.batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE) # .shuffle(BATCH_SIZE * 16) NACH BATCH
+train_dataset = train_dataset.batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
 test_dataset = test_dataset.batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
 
 train_dataset_classes = np.concatenate([np.argmax(y, axis = -1) for x, y in train_dataset], axis = 0)
@@ -100,7 +105,7 @@ def create_model():
 model = create_model()
 model.summary()
 
-if Path(IO_PATH + "/model.weights.h5").exists():
+if pl.Path(IO_PATH + "/model.weights.h5").exists():
     model.load_weights(IO_PATH + "/model.weights.h5")
     print(f"Loaded initial weights from '{IO_PATH + '/model.weights.h5'}'")
 
