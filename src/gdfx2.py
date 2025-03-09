@@ -10,7 +10,7 @@ IO_PATH = "./io"
 IMG_SIZE = (256, 256, 3)
 SEQ_LEN = 8
 BATCH_SIZE = 12
-EPOCHS = 5
+EPOCHS = 3
 
 print(tf.config.list_physical_devices('GPU'))
 
