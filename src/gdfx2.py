@@ -9,8 +9,6 @@ from parameters import *
 
 print(tf.config.list_physical_devices('GPU'))
 
-# DATASET STUFF
-
 print("############################## DATASET ##############################")
 
 def df40_list_labeled_items(split_path: Path):
@@ -74,8 +72,6 @@ for i, c in enumerate(CLASS_LIST):
     print(f" {i} {c} -> {(test_dataset_classes == i).sum()}")
 print(test_dataset_classes)
 
-# MODEL STUFF
-
 print("############################## MODEL ##############################")
 
 cp_callback = tf.keras.callbacks.ModelCheckpoint(
@@ -107,8 +103,6 @@ model.summary()
 if Path(IO_PATH + "/model.weights.h5").exists():
     model.load_weights(IO_PATH + "/model.weights.h5")
     print(f"Loaded initial weights from '{IO_PATH + '/model.weights.h5'}'")
-
-# TRAINING STUFF
 
 print("############################## TRAINING ##############################")
 
