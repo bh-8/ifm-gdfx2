@@ -94,7 +94,7 @@ def create_model():
             ly.LSTM(128), name="bilstm"
         ), ly.Dense(len(CLASS_LIST), activation="softmax")
     ])
-    model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy"])
+    model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["accuracy", "precision", "recall", "f1score", "auc"])
     return model
 
 model = create_model()
@@ -109,4 +109,3 @@ print("############################## TRAINING ##############################")
 history = model.fit(train_dataset, epochs=EPOCHS, validation_data=test_dataset, callbacks=[cp_callback])
 
 # TODO: Lernrate/WeightDecay/DropOut und Optimierungen aus altem Src übernehmen
-# TODO: https://www.tensorflow.org/tutorials/keras/save_and_load
