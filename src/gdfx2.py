@@ -26,7 +26,7 @@ def df40_list_labeled_items(split_path: pl.Path):
             continue
         # gather and sort frames, truncate too long sequences
         for i in sorted([e for e in class_path.glob("**/") if e.match("frames/*")]):
-            sequential_paths: list[pl.Path] = sorted([f for f in i.glob("*")], key = lambda x : int(x.stem))[:SEQ_LEN]
+            sequential_paths: list[pl.Path] = sorted([f for f in i.glob("*")])[:SEQ_LEN]
 
             if len(sequential_paths) >= SEQ_LEN: # minimum sequence length requirement
                 list_sequences.append([str(x) for x in sequential_paths])
