@@ -27,6 +27,12 @@ def df40_list_labeled_items(split_path: pl.Path):
         # gather and sort frames, truncate too long sequences
         for i in sorted([e for e in class_path.glob("**/") if e.match("frames/*")]):
             sequential_paths: list[pl.Path] = sorted([f for f in i.glob("*")], key = lambda x : int(x.stem))[:SEQ_LEN]
+            
+            for f in sequential_paths:
+                if len(f.stem) > 3:
+                    print(sequential_paths)
+                    return list_sequences, list_labels
+            
             if len(sequential_paths) >= SEQ_LEN: # minimum sequence length requirement
                 list_sequences.append([str(x) for x in sequential_paths])
                 list_labels.append(class_id)
@@ -41,10 +47,10 @@ def df40_load_and_preprocess(path_sequence: list[str], label: int):
         return image
     return tf.stack([_load_image(elem) for elem in tf.unstack(path_sequence)]), tf.one_hot(label, len(CLASS_LIST))
 
+print("Preprocessing items...")
 train_sequences, train_labels = df40_list_labeled_items(pl.Path(IO_PATH + "/df40/train").resolve())
 test_sequences, test_labels = df40_list_labeled_items(pl.Path(IO_PATH + "/df40/test").resolve())
 
-###
 train_data = list(zip(train_sequences, train_labels))
 test_data = list(zip(test_sequences, test_labels))
 random.shuffle(train_data)
@@ -53,7 +59,6 @@ train_sequences, train_labels = zip(*train_data)
 test_sequences, test_labels = zip(*test_data)
 train_sequences, train_labels = list(train_sequences), list(train_labels)
 test_sequences, test_labels = list(test_sequences), list(test_labels)
-###
 
 train_dataset = tf.data.Dataset.from_tensor_slices((train_sequences, train_labels))
 test_dataset = tf.data.Dataset.from_tensor_slices((test_sequences, test_labels))
