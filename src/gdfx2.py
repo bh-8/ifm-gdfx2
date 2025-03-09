@@ -27,15 +27,16 @@ def df40_list_labeled_items(split_path: pl.Path):
         # gather and sort frames, truncate too long sequences
         for i in sorted([e for e in class_path.glob("**/") if e.match("frames/*")]):
             sequential_paths: list[pl.Path] = sorted([f for f in i.glob("*")], key = lambda x : int(x.stem))[:SEQ_LEN]
-            
-            for f in sequential_paths:
-                if len(f.stem) > 3:
-                    print(sequential_paths)
-                    return list_sequences, list_labels
-            
+
             if len(sequential_paths) >= SEQ_LEN: # minimum sequence length requirement
                 list_sequences.append([str(x) for x in sequential_paths])
                 list_labels.append(class_id)
+
+                for f in sequential_paths:
+                    if len(f.stem) > 3:
+                        print(sequential_paths)
+                        break
+
     return list_sequences, list_labels
 
 def df40_load_and_preprocess(path_sequence: list[str], label: int):
@@ -50,6 +51,9 @@ def df40_load_and_preprocess(path_sequence: list[str], label: int):
 print("Preprocessing items...")
 train_sequences, train_labels = df40_list_labeled_items(pl.Path(IO_PATH + "/df40/train").resolve())
 test_sequences, test_labels = df40_list_labeled_items(pl.Path(IO_PATH + "/df40/test").resolve())
+
+import sys
+sys.exit(0)
 
 train_data = list(zip(train_sequences, train_labels))
 test_data = list(zip(test_sequences, test_labels))
