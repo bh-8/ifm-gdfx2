@@ -33,7 +33,7 @@ def df40_list_labeled_items(split_path: pl.Path):
                 list_labels.append(class_id)
 
                 for f in sequential_paths:
-                    if len(f.stem) > 3:
+                    if len(f.stem) > 4:
                         print(sequential_paths)
                         break
 
