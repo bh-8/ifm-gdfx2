@@ -1,0 +1,57 @@
+p619996@gpu-kong:~/storage-private/ifm-gdfx2$ CUDA_VISIBLE_DEVICES=7 python3 -u src/gdfx2.py
+2025-03-09 21:21:03.998983: E external/local_xla/xla/stream_executor/cuda/cuda_fft.cc:477] Unable to register cuFFT factory: Attempting to register factory for plugin cuFFT when one has already been registered
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+E0000 00:00:1741551664.031351 2382390 cuda_dnn.cc:8310] Unable to register cuDNN factory: Attempting to register factory for plugin cuDNN when one has already been registered
+E0000 00:00:1741551664.041474 2382390 cuda_blas.cc:1418] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
+2025-03-09 21:21:04.068356: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+[PhysicalDevice(name='/physical_device:GPU:0', device_type='GPU')]
+############################## DATASET ##############################
+Enumerating items...
+Shuffling items...
+Preprocessing items...
+I0000 00:00:1741551677.522877 2382390 gpu_device.cc:2022] Created device /job:localhost/replica:0/task:0/device:GPU:0 with 9617 MB memory:  -> device: 0, name: NVIDIA GeForce RTX 2080 Ti, pci bus id: 0000:10:00.0, compute capability: 7.5
+Batching items...
+2025-03-09 21:29:14.372716: I tensorflow/core/framework/local_rendezvous.cc:405] Local rendezvous is aborting with status: OUT_OF_RANGE: End of sequence
+2025-03-09 21:42:26.181864: I tensorflow/core/framework/local_rendezvous.cc:405] Local rendezvous is aborting with status: OUT_OF_RANGE: End of sequence
+Train Dataset:
+ 0 original -> 999
+ 1 face_swap -> 6510
+ 2 face_reenact -> 8467
+[2 1 2 ... 2 2 1]
+Test Dataset:
+ 0 original -> 999
+ 1 face_swap -> 7075
+ 2 face_reenact -> 9423
+[1 2 2 ... 2 2 2]
+############################## MODEL ##############################
+Model: "sequential"
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┓
+┃ Layer (type)                         ┃ Output Shape                ┃         Param # ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━┩
+│ resnet (TimeDistributed)             │ (None, 8, 8, 8, 2048)       │      23,587,712 │
+├──────────────────────────────────────┼─────────────────────────────┼─────────────────┤
+│ pooling2d (TimeDistributed)          │ (None, 8, 2048)             │               0 │
+├──────────────────────────────────────┼─────────────────────────────┼─────────────────┤
+│ bilstm (Bidirectional)               │ (None, 256)                 │       2,229,248 │
+├──────────────────────────────────────┼─────────────────────────────┼─────────────────┤
+│ dense (Dense)                        │ (None, 3)                   │             771 │
+└──────────────────────────────────────┴─────────────────────────────┴─────────────────┘
+ Total params: 25,817,731 (98.49 MB)
+ Trainable params: 2,230,019 (8.51 MB)
+ Non-trainable params: 23,587,712 (89.98 MB)
+############################## TRAINING ##############################
+Epoch 1/3
+I0000 00:00:1741552991.140141 2382432 cuda_dnn.cc:529] Loaded cuDNN version 90300
+1332/1332 ━━━━━━━━━━━━━━━━━━━━ 0s 675ms/step - auc: 0.7701 - categorical_accuracy: 0.5710 - f1_score: 0.3736 - loss: 0.8649 - precision: 0.5865 - recall: 0.4663
+Epoch 1: saving model to ./io/model.weights.h5
+1332/1332 ━━━━━━━━━━━━━━━━━━━━ 1860s 1s/step - auc: 0.7702 - categorical_accuracy: 0.5710 - f1_score: 0.3737 - loss: 0.8649 - precision: 0.5866 - recall: 0.4664 - val_auc: 0.8114 - val_categorical_accuracy: 0.5638 - val_f1_score: 0.2912 - val_loss: 0.8915 - val_precision: 0.5699 - val_recall: 0.5513
+Epoch 2/3
+1332/1332 ━━━━━━━━━━━━━━━━━━━━ 0s 618ms/step - auc: 0.8414 - categorical_accuracy: 0.6710 - f1_score: 0.4571 - loss: 0.7527 - precision: 0.6866 - recall: 0.62752025-03-09 22:27:14.503423: W tensorflow/core/kernels/data/prefetch_autotuner.cc:52] Prefetch autotuner tried to allocate 134204672 bytes after encountering the first element of size 134204672 bytes.This already causes the autotune ram budget to be exceeded. To stay within the ram budget, either increase the ram budget or reduce element size
+
+Epoch 2: saving model to ./io/model.weights.h5
+1332/1332 ━━━━━━━━━━━━━━━━━━━━ 1728s 1s/step - auc: 0.8414 - categorical_accuracy: 0.6710 - f1_score: 0.4571 - loss: 0.7527 - precision: 0.6866 - recall: 0.6275 - val_auc: 0.8369 - val_categorical_accuracy: 0.6419 - val_f1_score: 0.4162 - val_loss: 0.7479 - val_precision: 0.6572 - val_recall: 0.5983
+Epoch 3/3
+1332/1332 ━━━━━━━━━━━━━━━━━━━━ 0s 625ms/step - auc: 0.8508 - categorical_accuracy: 0.6842 - f1_score: 0.4678 - loss: 0.7325 - precision: 0.7034 - recall: 0.6484
+Epoch 3: saving model to ./io/model.weights.h5
+1332/1332 ━━━━━━━━━━━━━━━━━━━━ 1746s 1s/step - auc: 0.8508 - categorical_accuracy: 0.6842 - f1_score: 0.4678 - loss: 0.7325 - precision: 0.7034 - recall: 0.6484 - val_auc: 0.8414 - val_categorical_accuracy: 0.6493 - val_f1_score: 0.4279 - val_loss: 0.7384 - val_precision: 0.6664 - val_recall: 0.6029
