@@ -88,6 +88,9 @@ cp_callback = tf.keras.callbacks.ModelCheckpoint(
     verbose=1
 )
 
+# LR-Scheduler (ReduceLROnPlateau)
+lr_scheduler = tf.keras.callbacks.ReduceLROnPlateau(monitor="val_loss", factor=0.5, patience=2, min_lr=1e-6)
+
 def create_model():
     resnet50 = tf.keras.applications.ResNet50(weights="imagenet", include_top=False, input_shape=IMG_SIZE)
     resnet50.trainable = False # freeze weights
@@ -99,8 +102,10 @@ def create_model():
         ), ly.TimeDistributed(
             ly.GlobalAveragePooling2D(), name="pooling2d"
         ), ly.Bidirectional(
-            ly.LSTM(128), name="bilstm"
-        ), ly.Dense(len(CLASS_LIST), activation="softmax")
+            ly.LSTM(256), name="bilstm"
+        ),
+        ly.DropOut(0.25), # DropOut Layer
+        ly.Dense(len(CLASS_LIST), activation="softmax", kernel_regularizer=tf.keras.regularizers.l2(0.01)) # L2-Regularisierung
     ])
     model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["auc", "categorical_accuracy", "f1_score", "precision", "recall"])
     return model
@@ -114,6 +119,4 @@ if pl.Path(IO_PATH + "/model.weights.h5").exists():
 
 print("############################## TRAINING ##############################")
 
-history = model.fit(train_dataset, epochs=EPOCHS, validation_data=test_dataset, callbacks=[cp_callback])
-
-# TODO: Lernrate/WeightDecay/DropOut und Optimierungen aus altem Src übernehmen
+history = model.fit(train_dataset, epochs=EPOCHS, validation_data=test_dataset, callbacks=[cp_callback, lr_scheduler])
