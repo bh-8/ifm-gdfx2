@@ -91,6 +91,9 @@ cp_callback = tf.keras.callbacks.ModelCheckpoint(
 # LR-Scheduler (ReduceLROnPlateau)
 lr_scheduler = tf.keras.callbacks.ReduceLROnPlateau(monitor="val_loss", factor=0.5, patience=2, min_lr=1e-6)
 
+# Early-Stopping (Training, bis Modell sich nicht weiter verbessert)
+early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=5, restore_best_weights=True)
+
 def create_model():
     resnet50 = tf.keras.applications.ResNet50(weights="imagenet", include_top=False, input_shape=IMG_SIZE)
     resnet50.trainable = False # freeze weights
@@ -119,4 +122,4 @@ if pl.Path(IO_PATH + "/model.weights.h5").exists():
 
 print("############################## TRAINING ##############################")
 
-history = model.fit(train_dataset, epochs=EPOCHS, validation_data=test_dataset, callbacks=[cp_callback, lr_scheduler])
+history = model.fit(train_dataset, epochs=EPOCHS, validation_data=test_dataset, callbacks=[cp_callback, lr_scheduler, early_stopping])
