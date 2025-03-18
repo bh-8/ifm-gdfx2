@@ -7,4 +7,5 @@ tex/*.fls
 tex/*.log
 tex/*.out
 tex/*.pdf
+tex/*.run.xml
 tex/*.synctex.gz
