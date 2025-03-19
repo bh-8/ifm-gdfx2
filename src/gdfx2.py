@@ -107,7 +107,7 @@ def create_model():
         ), ly.Bidirectional(
             ly.LSTM(256), name="bilstm"
         ),
-        ly.DropOut(0.25), # DropOut Layer
+        ly.Dropout(0.25), # Dropout Layer
         ly.Dense(len(CLASS_LIST), activation="softmax", kernel_regularizer=tf.keras.regularizers.l2(0.01)) # L2-Regularisierung
     ])
     model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["auc", "categorical_accuracy", "f1_score", "precision", "recall"])
