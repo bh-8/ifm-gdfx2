@@ -92,8 +92,6 @@ lr_scheduler = tf.keras.callbacks.ReduceLROnPlateau(monitor="val_loss", factor=0
 # Early-Stopping (Training, bis Modell sich nicht weiter verbessert)
 early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=3, restore_best_weights=True)
 
-# Baseline Model
-
 def create_baseline_model(feature_extractor_str: str):
     feature_extractor = None
     if feature_extractor_str == "resnet":
@@ -102,19 +100,7 @@ def create_baseline_model(feature_extractor_str: str):
         feature_extractor = tf.keras.applications.EfficientNetB3(weights="imagenet", input_shape=IMG_SIZE, pooling="avg", include_top=False)
     else:
         return None
-
-    baseline_model = tf.keras.Sequential([
-        ly.Input(shape=IMG_SIZE),
-        feature_extractor,
-    ])
-    baseline_model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate = 1e-5), loss="categorical_crossentropy", metrics=["auc", "categorical_accuracy", "f1_score"])
-    return baseline_model
-
-baseline_model = create_baseline_model("resnet")
-baseline_model.summary()
-
-import sys
-sys.exit(0)
+    return feature_extractor
 
 def create_model():
     model = tf.keras.Sequential([
@@ -132,6 +118,9 @@ def create_model():
 
 model = create_model()
 model.summary()
+
+import sys
+sys.exit(0)
 
 class FreezeBaselineCallback(tf.keras.callbacks.Callback):
     def on_epoch_begin(self, epoch, logs = None):
