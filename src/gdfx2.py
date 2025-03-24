@@ -144,7 +144,7 @@ history = model.fit(train_dataset, epochs=EPOCHS, validation_data=test_dataset, 
 
 print("############################## STORING/CONVERT ##############################")
 print(f"Saving latest model state to '{IO_PATH + '/model_final.keras'}'")
-model.save(IO_PATH + "/model_final.keras")
+model.save(IO_PATH + "/model_final.keras", save_format="tf")
 
 print(f"Converting quantized model...")
 model_converter = tf.lite.TFLiteConverter.from_saved_model(IO_PATH + "/model_final.keras")
