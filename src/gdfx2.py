@@ -1,3 +1,4 @@
+import collections
 import numpy as np
 import pathlib as pl
 import random
@@ -66,18 +67,18 @@ print("Prefetching items...")
 train_dataset = train_dataset.prefetch(tf.data.AUTOTUNE)
 test_dataset = test_dataset.prefetch(tf.data.AUTOTUNE)
 
-print([int(l.numpy()) for (_, l) in train_dataset])
+train_dataset_classes = collections.Counter([int(l.numpy()) for (_, l) in train_dataset])
+test_dataset_classes = collections.Counter([int(l.numpy()) for (_, l) in test_dataset])
 
 print("Train Dataset:")
 for i, c in enumerate(CLASS_LIST):
-    
-    print(f" {i} {c} -> {(train_dataset_classes == i).sum()}")
-#print(train_dataset_classes)
+    print(f" {i} {c} -> {train_dataset_classes[i]}")
+print(train_dataset_classes)
 
 print("Test Dataset:")
-#for i, c in enumerate(CLASS_LIST):
-#    print(f" {i} {c} -> {(test_dataset_classes == i).sum()}")
-#print(test_dataset_classes)
+for i, c in enumerate(CLASS_LIST):
+    print(f" {i} {c} -> {test_dataset_classes[i]}")
+print(test_dataset_classes)
 
 print("############################## MODEL ##############################")
 
