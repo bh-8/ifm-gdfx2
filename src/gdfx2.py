@@ -134,10 +134,10 @@ class FreezeBaselineCallback(tf.keras.callbacks.Callback):
 print("############################## TRAINING ##############################")
 
 # TensorBoard
-log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
+#log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+#tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
 
-history = model.fit(train_dataset, epochs=EPOCHS, validation_data=test_dataset, validation_freq=3, callbacks=[model_checkpoint, lr_scheduler, early_stopping, FreezeBaselineCallback(), tensorboard_callback])
+history = model.fit(train_dataset, epochs=EPOCHS, validation_data=test_dataset, validation_freq=3, callbacks=[model_checkpoint, lr_scheduler, early_stopping, FreezeBaselineCallback()])
 
 print("############################## STORING/CONVERT ##############################")
 print(f"Saving latest model state to '{IO_PATH + '/model_final.keras'}'")
