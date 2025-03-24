@@ -10,7 +10,7 @@ IO_PATH = "./io"
 IMG_SIZE = (256, 256, 3)
 SEQ_LEN = 12
 BATCH_SIZE = 8
-EPOCHS = 10
+EPOCHS = 12
 
 print(tf.config.list_physical_devices('GPU'))
 
@@ -66,18 +66,18 @@ print("Prefetching items...")
 train_dataset = train_dataset.prefetch(tf.data.AUTOTUNE)
 test_dataset = test_dataset.prefetch(tf.data.AUTOTUNE)
 
-train_dataset_classes = np.concatenate([np.argmax(y, axis = -1) for x, y in train_dataset], axis = 0)
-test_dataset_classes = np.concatenate([np.argmax(y, axis = -1) for x, y in test_dataset], axis = 0)
+print([l for (_, l) in train_dataset.unbatch()])
 
 print("Train Dataset:")
 for i, c in enumerate(CLASS_LIST):
+    
     print(f" {i} {c} -> {(train_dataset_classes == i).sum()}")
-print(train_dataset_classes)
+#print(train_dataset_classes)
 
 print("Test Dataset:")
-for i, c in enumerate(CLASS_LIST):
-    print(f" {i} {c} -> {(test_dataset_classes == i).sum()}")
-print(test_dataset_classes)
+#for i, c in enumerate(CLASS_LIST):
+#    print(f" {i} {c} -> {(test_dataset_classes == i).sum()}")
+#print(test_dataset_classes)
 
 print("############################## MODEL ##############################")
 
@@ -88,7 +88,7 @@ model_checkpoint = tf.keras.callbacks.ModelCheckpoint(
 )
 
 # LR-Scheduler (ReduceLROnPlateau)
-lr_scheduler = tf.keras.callbacks.ReduceLROnPlateau(monitor="val_loss", factor=0.5, patience=2, min_lr=1e-5)
+lr_scheduler = tf.keras.callbacks.ReduceLROnPlateau(monitor="val_loss", factor=0.5, patience=3, min_lr=1e-5)
 
 # Early-Stopping (Training, bis Modell sich nicht weiter verbessert)
 early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=3, restore_best_weights=True)
@@ -122,3 +122,12 @@ if pl.Path(IO_PATH + "/model.weights.h5").exists():
 print("############################## TRAINING ##############################")
 
 history = model.fit(train_dataset, epochs=EPOCHS, validation_data=test_dataset, validation_freq=3, callbacks=[model_checkpoint, lr_scheduler, early_stopping])
+
+print("############################## STORING/CONVERT ##############################")
+print(f"Saving latest model state to '{IO_PATH + '/model_final.pb'}'")
+model.save(IO_PATH + "/model_final.pb")
+
+print(f"Converting quantized model...")
+model_converter = tf.lite.TFLiteConverter.from_saved_model(IO_PATH + "/model_final.pb")
+model_converter.optimizations = [tf.lite.Optimize.DEFAULT]
+model_quantized = model_converter.convert()
