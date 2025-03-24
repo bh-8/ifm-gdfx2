@@ -94,19 +94,33 @@ early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=3
 
 # Baseline Model
 
-def create_model_baseline(baseline_model_str: str):
-    baseline_model = None
-    if baseline_model_str == "resnet":
-        baseline_model = tf.keras.applications.ResNet50(weights="imagenet", input_shape=IMG_SIZE, pooling="avg", include_top=False)
-    elif baseline_model_str == "efficientnet":
-        baseline_model = tf.keras.applications.EfficientNetB3(weights="imagenet", input_shape=IMG_SIZE, pooling="avg", include_top=False)
+def create_baseline_model(feature_extractor_str: str):
+    feature_extractor = None
+    if feature_extractor_str == "resnet":
+        feature_extractor = tf.keras.applications.ResNet50(weights="imagenet", input_shape=IMG_SIZE, pooling="avg", include_top=False)
+    elif feature_extractor_str == "efficientnet":
+        feature_extractor = tf.keras.applications.EfficientNetB3(weights="imagenet", input_shape=IMG_SIZE, pooling="avg", include_top=False)
+    else:
+        return None
+
+    baseline_model = tf.keras.Sequential([
+        ly.Input(shape=IMG_SIZE),
+        feature_extractor,
+    ])
+    baseline_model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate = 1e-5), loss="categorical_crossentropy", metrics=["auc", "categorical_accuracy", "f1_score"])
     return baseline_model
+
+baseline_model = create_baseline_model("resnet")
+baseline_model.summary()
+
+import sys
+sys.exit(0)
 
 def create_model():
     model = tf.keras.Sequential([
         ly.Input(shape=(SEQ_LEN, *IMG_SIZE)),
         ly.TimeDistributed(
-            create_model_baseline("resnet"), name="baseline"
+            create_baseline_model("resnet"), name="baseline"
         ), ly.Bidirectional(
             ly.LSTM(256), name="bilstm"
         ),
