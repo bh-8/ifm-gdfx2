@@ -10,7 +10,7 @@ CLASS_LIST = ["original", "face_swap", "face_reenact"]
 IO_PATH = "./io"
 IMG_SIZE = (256, 256, 3)
 SEQ_LEN = 12
-BATCH_SIZE = 8
+BATCH_SIZE = 4
 EPOCHS = 12
 
 print(tf.config.list_physical_devices('GPU'))
@@ -126,7 +126,7 @@ class FreezeBaselineCallback(tf.keras.callbacks.Callback):
     def on_epoch_begin(self, epoch, logs = None):
         if epoch >= 3:
             print("Freezing baseline model")
-            self.model.get_layer("baseline").trainable = False
+            model.get_layer("baseline").trainable = False
 
 #if pl.Path(IO_PATH + "/model.weights.h5").exists():
 #    model.load_weights(IO_PATH + "/model.weights.h5")
