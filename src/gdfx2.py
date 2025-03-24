@@ -13,6 +13,10 @@ IMG_SIZE = (256, 256, 3)
 SEQ_LEN = 12
 BATCH_SIZE = 4
 EPOCHS = 6
+EPOCHS_BASELINE = 1
+EPOCHS_PATIENCE = 3
+LEARNING_RATE_DEFAULT = 1e-3
+LEARNING_RATE_MIN = 1e-6
 
 print(tf.config.list_physical_devices('GPU'))
 
@@ -65,13 +69,11 @@ test_dataset_classes = collections.Counter([int(l.numpy()) for (_, l) in test_da
 
 print("Train Dataset:")
 for i, c in enumerate(CLASS_LIST):
-    print(f" {i} {c} -> {train_dataset_classes[i]}")
-print(train_dataset_classes)
+    print(f" {c}: {train_dataset_classes[i]}x")
 
 print("Test Dataset:")
 for i, c in enumerate(CLASS_LIST):
-    print(f" {i} {c} -> {test_dataset_classes[i]}")
-print(test_dataset_classes)
+    print(f" {c}: {test_dataset_classes[i]}x")
 
 print("Prefetching items...")
 train_dataset = train_dataset.map(df40_load_and_preprocess, num_parallel_calls=tf.data.AUTOTUNE).shuffle(int(float(train_dataset.cardinality()) * 0.025), reshuffle_each_iteration=True).batch(BATCH_SIZE)
@@ -81,7 +83,7 @@ test_dataset = test_dataset.prefetch(tf.data.AUTOTUNE)
 
 print("############################## MODEL ##############################")
 
-model_optimizer = tf.keras.optimizers.Adam(learning_rate = 1e-5)
+model_optimizer = tf.keras.optimizers.Adam(learning_rate = LEARNING_RATE_MIN)
 
 def create_baseline_model(feature_extractor_str: str):
     feature_extractor = None
@@ -118,31 +120,24 @@ model_checkpoint = tf.keras.callbacks.ModelCheckpoint(
 )
 
 # LR-Scheduler (ReduceLROnPlateau)
-lr_scheduler = tf.keras.callbacks.ReduceLROnPlateau(monitor="val_loss", factor=0.5, patience=3, min_lr=1e-6)
+lr_scheduler = tf.keras.callbacks.ReduceLROnPlateau(monitor = "val_loss", factor = 0.5, patience = EPOCHS_PATIENCE, min_lr = LEARNING_RATE_MIN)
 
 # Early-Stopping (Training, bis Modell sich nicht weiter verbessert)
-early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=3, restore_best_weights=True)
+early_stopping = tf.keras.callbacks.EarlyStopping(monitor = "val_loss", patience = EPOCHS_PATIENCE, restore_best_weights = True)
 
 class FreezeBaselineCallback(tf.keras.callbacks.Callback):
     def on_epoch_begin(self, epoch, logs = None):
-        if epoch == 3:
+        if epoch == EPOCHS_BASELINE:
             model.get_layer("baseline").trainable = False
-            model_optimizer.learning_rate.assign(1e-3)
+            model_optimizer.learning_rate.assign(LEARNING_RATE_DEFAULT)
             print("Baseline Model freezed, updated learning rate.")
-
-#if pl.Path(IO_PATH + "/model.weights.h5").exists():
-#    model.load_weights(IO_PATH + "/model.weights.h5")
-#    print(f"Loaded initial weights from '{IO_PATH + '/model.weights.h5'}'")
 
 print("############################## TRAINING ##############################")
 
-# TensorBoard
-#log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-#tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
-
-history = model.fit(train_dataset, epochs=EPOCHS, validation_data=test_dataset, validation_freq=3, callbacks=[model_checkpoint, lr_scheduler, early_stopping, FreezeBaselineCallback()])
+history = model.fit(train_dataset, epochs = EPOCHS, validation_data = test_dataset, validation_freq = EPOCHS_PATIENCE, callbacks = [model_checkpoint, lr_scheduler, early_stopping, FreezeBaselineCallback()])
 
 print("############################## STORING/CONVERT ##############################")
+
 print(f"Saving latest model state to '{IO_PATH + '/model_final.keras'}'")
 model.save(IO_PATH + "/model_final.keras", save_format="tf")
 
