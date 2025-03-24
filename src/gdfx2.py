@@ -60,15 +60,18 @@ test_sequences, test_labels = list(test_sequences), list(test_labels)
 print("Preprocessing items...")
 train_dataset = tf.data.Dataset.from_tensor_slices((train_sequences, train_labels))
 test_dataset = tf.data.Dataset.from_tensor_slices((test_sequences, test_labels))
-train_dataset = train_dataset.map(df40_load_and_preprocess, num_parallel_calls=tf.data.AUTOTUNE).shuffle(int(float(train_dataset.cardinality()) * 0.025), reshuffle_each_iteration=True).batch(BATCH_SIZE)
-test_dataset = test_dataset.map(df40_load_and_preprocess, num_parallel_calls=tf.data.AUTOTUNE).shuffle(int(float(test_dataset.cardinality()) * 0.025), reshuffle_each_iteration=True).batch(BATCH_SIZE)
+train_dataset = train_dataset.map(df40_load_and_preprocess, num_parallel_calls=tf.data.AUTOTUNE).shuffle(int(float(train_dataset.cardinality()) * 0.025), reshuffle_each_iteration=True)
+test_dataset = test_dataset.map(df40_load_and_preprocess, num_parallel_calls=tf.data.AUTOTUNE).shuffle(int(float(test_dataset.cardinality()) * 0.025), reshuffle_each_iteration=True)
 
 print("Prefetching items...")
 train_dataset = train_dataset.prefetch(tf.data.AUTOTUNE)
 test_dataset = test_dataset.prefetch(tf.data.AUTOTUNE)
 
+print("Creating batches...")
 train_dataset_classes = collections.Counter([int(l.numpy()) for (_, l) in train_dataset])
 test_dataset_classes = collections.Counter([int(l.numpy()) for (_, l) in test_dataset])
+train_dataset = train_dataset.batch(BATCH_SIZE)
+test_dataset = test_dataset.batch(BATCH_SIZE)
 
 print("Train Dataset:")
 for i, c in enumerate(CLASS_LIST):
