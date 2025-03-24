@@ -54,8 +54,8 @@ random.shuffle(train_data)
 random.shuffle(test_data)
 train_sequences, train_labels = zip(*train_data)
 test_sequences, test_labels = zip(*test_data)
-train_sequences, train_labels = list(train_sequences), list(train_labels)
-test_sequences, test_labels = list(test_sequences), list(test_labels)
+train_sequences, train_labels = list(train_sequences)[:1000], list(train_labels)[:1000]
+test_sequences, test_labels = list(test_sequences)[:1000], list(test_labels)[:1000]
 
 print("Preprocessing items...")
 train_dataset = tf.data.Dataset.from_tensor_slices((train_sequences, train_labels))

@@ -5,18 +5,20 @@
 \usepackage{geometry}
 \usepackage{hyperref}
 
-\title{Generalizable Deepfake Detection Framework}
+\title{Generalizable Deepfake Detection}
 \author{Bernhard Birnbaum}
 
 \begin{document}
     \maketitle
 
     \section{Motivation \& Stand der Technik}
-    Im Rahmen des Praktikums \enquote{Implementierung in Forensik und Mediensicherheit} soll ein 
-    \begin{itemize}
-        \item Basics~\footnote{Machine Learning | Google for Developers, \url{https://developers.google.com/machine-learning}}~\footnote{Dive into Deep Learning, \url{https://d2l.ai/}}
-        \item Deep Learning Book~\cite{deeplearningbook}
-    \end{itemize}
+    Im Rahmen des Praktikums \enquote{Implementierung in Forensik und Mediensicherheit} soll ein Framework zur Detektion von Deepfakes (Bildsequenzen) implementiert werden.
+    Dabei wird neben der Detektion eine Klassifikation verschiedener Deepfake-Techniken, insbesondere \enquote{Face-Swap} und \enquote{Face-Reenactment}, etabliert.
+    Im Zentrum des Projekts steht die Fragestellung, inwiefern ein geeignetes Machine-Learning-Modell~\footnote{Machine Learning, Google for Developers, \url{https://developers.google.com/machine-learning}} konzeptioniert, implementiert bzw. optimiert werden kann, das diesen Ansprüchen genügt.
+    Dazu wird zunächst ein Baseline-Modell erzeugt, welches im späteren Verlauf der Untersuchung mit experimentellen Komponenten angepasst werden kann.
+    Abschließend werden die Auswirkungen auf die Modell-Performance anhand geeigneter Metriken evaluiert.
+    \\
+    Zur Implementierung der Deepfake-Klassifikation werden Deeplearning-Methoden~\cite{deeplearningbook} eingesetzt.
     \subsection{Resnet}
     \begin{itemize}
         \item CNNs
