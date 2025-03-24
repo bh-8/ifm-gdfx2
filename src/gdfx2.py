@@ -119,9 +119,6 @@ def create_model():
 model = create_model()
 model.summary()
 
-import sys
-sys.exit(0)
-
 class FreezeBaselineCallback(tf.keras.callbacks.Callback):
     def on_epoch_begin(self, epoch, logs = None):
         if epoch >= 3:
