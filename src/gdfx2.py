@@ -80,18 +80,6 @@ test_dataset = test_dataset.prefetch(tf.data.AUTOTUNE)
 
 print("############################## MODEL ##############################")
 
-model_checkpoint = tf.keras.callbacks.ModelCheckpoint(
-    filepath=IO_PATH + "/model.weights.h5",
-    save_weights_only=True,
-    verbose=1
-)
-
-# LR-Scheduler (ReduceLROnPlateau)
-lr_scheduler = tf.keras.callbacks.ReduceLROnPlateau(monitor="val_loss", factor=0.5, patience=3, min_lr=1e-5)
-
-# Early-Stopping (Training, bis Modell sich nicht weiter verbessert)
-early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=3, restore_best_weights=True)
-
 def create_baseline_model(feature_extractor_str: str):
     feature_extractor = None
     if feature_extractor_str == "resnet":
@@ -113,15 +101,28 @@ def create_model():
         ly.Dropout(0.3), # Dropout Layer
         ly.Dense(len(CLASS_LIST), activation="softmax", kernel_regularizer=tf.keras.regularizers.l2(0.003)) # L2-Regularisierung
     ])
-    model.compile(optimizer=tf.keras.optimizers.Adam(), loss="categorical_crossentropy", metrics=["auc", "categorical_accuracy", "f1_score"])
+    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate = 1e-4), loss="categorical_crossentropy", metrics=["auc", "categorical_accuracy", "f1_score"])
     return model
 
 model = create_model()
 model.summary()
 
+# Model Checkpoint
+model_checkpoint = tf.keras.callbacks.ModelCheckpoint(
+    filepath=IO_PATH + "/model.weights.h5",
+    save_weights_only=True,
+    verbose=1
+)
+
+# LR-Scheduler (ReduceLROnPlateau)
+lr_scheduler = tf.keras.callbacks.ReduceLROnPlateau(monitor="val_loss", factor=0.5, patience=3, min_lr=1e-6)
+
+# Early-Stopping (Training, bis Modell sich nicht weiter verbessert)
+early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=3, restore_best_weights=True)
+
 class FreezeBaselineCallback(tf.keras.callbacks.Callback):
     def on_epoch_begin(self, epoch, logs = None):
-        if epoch >= 3:
+        if epoch == 1:
             print("Freezing baseline model")
             model.get_layer("baseline").trainable = False
 
@@ -131,7 +132,11 @@ class FreezeBaselineCallback(tf.keras.callbacks.Callback):
 
 print("############################## TRAINING ##############################")
 
-history = model.fit(train_dataset, epochs=EPOCHS, validation_data=test_dataset, validation_freq=3, callbacks=[model_checkpoint, lr_scheduler, early_stopping, FreezeBaselineCallback()])
+# TensorBoard
+log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
+
+history = model.fit(train_dataset, epochs=EPOCHS, validation_data=test_dataset, validation_freq=3, callbacks=[model_checkpoint, lr_scheduler, early_stopping, FreezeBaselineCallback(), tensorboard_callback])
 
 print("############################## STORING/CONVERT ##############################")
 print(f"Saving latest model state to '{IO_PATH + '/model_final.keras'}'")
