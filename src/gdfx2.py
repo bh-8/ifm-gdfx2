@@ -8,9 +8,9 @@ import tensorflow_datasets as tfds
 CLASS_LIST = ["original", "face_swap", "face_reenact"]
 IO_PATH = "./io"
 IMG_SIZE = (256, 256, 3)
-SEQ_LEN = 8
-BATCH_SIZE = 12
-EPOCHS = 3
+SEQ_LEN = 12
+BATCH_SIZE = 8
+EPOCHS = 10
 
 print(tf.config.list_physical_devices('GPU'))
 
@@ -82,17 +82,17 @@ print(test_dataset_classes)
 
 print("############################## MODEL ##############################")
 
-cp_callback = tf.keras.callbacks.ModelCheckpoint(
+model_checkpoint = tf.keras.callbacks.ModelCheckpoint(
     filepath=IO_PATH + "/model.weights.h5",
     save_weights_only=True,
     verbose=1
 )
 
 # LR-Scheduler (ReduceLROnPlateau)
-lr_scheduler = tf.keras.callbacks.ReduceLROnPlateau(monitor="val_loss", factor=0.5, patience=2, min_lr=1e-6)
+lr_scheduler = tf.keras.callbacks.ReduceLROnPlateau(monitor="val_loss", factor=0.5, patience=2, min_lr=1e-5)
 
 # Early-Stopping (Training, bis Modell sich nicht weiter verbessert)
-early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=5, restore_best_weights=True)
+early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=3, restore_best_weights=True)
 
 def create_model():
     resnet50 = tf.keras.applications.ResNet50(weights="imagenet", include_top=False, input_shape=IMG_SIZE)
@@ -107,7 +107,7 @@ def create_model():
         ), ly.Bidirectional(
             ly.LSTM(256), name="bilstm"
         ),
-        ly.Dropout(0.25), # Dropout Layer
+        ly.Dropout(0.5), # Dropout Layer
         ly.Dense(len(CLASS_LIST), activation="softmax", kernel_regularizer=tf.keras.regularizers.l2(0.01)) # L2-Regularisierung
     ])
     model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["auc", "categorical_accuracy", "f1_score", "precision", "recall"])
@@ -122,4 +122,4 @@ if pl.Path(IO_PATH + "/model.weights.h5").exists():
 
 print("############################## TRAINING ##############################")
 
-history = model.fit(train_dataset, epochs=EPOCHS, validation_data=test_dataset, callbacks=[cp_callback, lr_scheduler, early_stopping])
+history = model.fit(train_dataset, epochs=EPOCHS, validation_data=test_dataset, callbacks=[model_checkpoint, lr_scheduler, early_stopping])
