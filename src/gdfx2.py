@@ -59,14 +59,14 @@ test_sequences, test_labels = list(test_sequences), list(test_labels)
 print("Preprocessing items...")
 train_dataset = tf.data.Dataset.from_tensor_slices((train_sequences, train_labels))
 test_dataset = tf.data.Dataset.from_tensor_slices((test_sequences, test_labels))
-train_dataset = train_dataset.map(df40_load_and_preprocess, num_parallel_calls=tf.data.AUTOTUNE).shuffle(int(float(train_dataset.cardinality()) * 0.025), reshuffle_each_iteration=True).batch(BATCH_SIZE)
-test_dataset = test_dataset.map(df40_load_and_preprocess, num_parallel_calls=tf.data.AUTOTUNE).shuffle(int(float(test_dataset.cardinality()) * 0.025), reshuffle_each_iteration=True).batch(BATCH_SIZE)
+train_dataset = train_dataset.map(df40_load_and_preprocess, num_parallel_calls=tf.data.AUTOTUNE).shuffle(int(float(train_dataset.cardinality()) * 0.025), reshuffle_each_iteration=True)
+test_dataset = test_dataset.map(df40_load_and_preprocess, num_parallel_calls=tf.data.AUTOTUNE).shuffle(int(float(test_dataset.cardinality()) * 0.025), reshuffle_each_iteration=True)
 
 print("Prefetching items...")
 train_dataset = train_dataset.prefetch(tf.data.AUTOTUNE)
 test_dataset = test_dataset.prefetch(tf.data.AUTOTUNE)
 
-print([l for (_, l) in train_dataset.unbatch()])
+print([int(l.numpy()) for (_, l) in train_dataset])
 
 print("Train Dataset:")
 for i, c in enumerate(CLASS_LIST):
@@ -121,7 +121,7 @@ if pl.Path(IO_PATH + "/model.weights.h5").exists():
 
 print("############################## TRAINING ##############################")
 
-history = model.fit(train_dataset, epochs=EPOCHS, validation_data=test_dataset, validation_freq=3, callbacks=[model_checkpoint, lr_scheduler, early_stopping])
+history = model.fit(train_dataset, batch_size=BATCH_SIZE, epochs=EPOCHS, validation_data=test_dataset, validation_freq=3, callbacks=[model_checkpoint, lr_scheduler, early_stopping])
 
 print("############################## STORING/CONVERT ##############################")
 print(f"Saving latest model state to '{IO_PATH + '/model_final.pb'}'")
