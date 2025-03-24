@@ -41,7 +41,7 @@
         \item Preprocessing/Normalisierung/Mischen
         \item Anzahl Elemente Training/Test pro Klasse/Splits
     \end{itemize}
-    \subsection{Model}
+    \subsection{Modelle}
     Aufbau und Funktion der einzelnen Schichten:
     \begin{itemize}
         \item Input-Layer
@@ -50,6 +50,11 @@
         \item BiLSTM/Layer
         \item DropOut-Layer
         \item Dense-Layer (Softmax, L2-Regularisierung, Kernel/Bias)
+    \end{itemize}
+    Verschiedene experimentelle Architekturen:
+    \begin{itemize}
+        \item Pruning % https://www.tensorflow.org/model_optimization/guide/pruning/pruning_with_keras
+        \item Quantisierung % https://medium.com/game-of-bits/optimizing-tensorflow-models-using-quantization-fb4d09b46fac
     \end{itemize}
     \subsection{Training}
     \begin{itemize}
@@ -63,9 +68,8 @@
         \item categorical accuracy
         \item f1 score
         \item area under curve
-        \item Tabelle zur Auswertung
-        \item Vergleich mit quantisierter Variante des Modells % https://medium.com/game-of-bits/optimizing-tensorflow-models-using-quantization-fb4d09b46fac
-        \item Pruning % https://www.tensorflow.org/model_optimization/guide/pruning/pruning_with_keras
+        \item Detektionszeit
+        \item Tabelle zur Auswertung und Vergleich mit Quantisierter/Pruning-Variante
     \end{itemize}
 
     \newpage
