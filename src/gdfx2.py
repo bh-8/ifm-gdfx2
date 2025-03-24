@@ -108,7 +108,7 @@ def create_model():
         ly.Dropout(0.3), # Dropout Layer
         ly.Dense(len(CLASS_LIST), activation="softmax", kernel_regularizer=tf.keras.regularizers.l2(0.003)) # L2-Regularisierung
     ])
-    model.compile(optimizer=tf.keras.optimizers.Adam(), loss=tf.keras.losses.SparseCategoricalCrossentropy(), metrics=["auc", "categorical_accuracy", "f1_score"])
+    model.compile(optimizer=tf.keras.optimizers.Adam(), loss=tf.keras.losses.CategoricalCrossentropy(), metrics=["auc", "categorical_accuracy", "f1_score"])
     return model
 
 model = create_model()
