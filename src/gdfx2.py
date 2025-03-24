@@ -92,14 +92,21 @@ lr_scheduler = tf.keras.callbacks.ReduceLROnPlateau(monitor="val_loss", factor=0
 # Early-Stopping (Training, bis Modell sich nicht weiter verbessert)
 early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=3, restore_best_weights=True)
 
-def create_model():
-    resnet50 = tf.keras.applications.ResNet50(weights="imagenet", include_top=False, input_shape=IMG_SIZE)
-    resnet50.trainable = False # freeze weights
+# Baseline Model
 
+def create_model_baseline(baseline_model_str: str):
+    baseline_model = None
+    if baseline_model_str == "resnet":
+        baseline_model = tf.keras.applications.ResNet50(weights="imagenet", include_top=False, input_shape=IMG_SIZE)
+    elif baseline_model_str == "efficientnet":
+        baseline_model = tf.keras.applications.EfficientNetB3(weights="imagenet", include_top=False, input_shape=IMG_SIZE)
+    return baseline_model
+
+def create_model():
     model = tf.keras.Sequential([
         ly.Input(shape=(SEQ_LEN, *IMG_SIZE)),
         ly.TimeDistributed(
-            resnet50, name="resnet"
+            create_model_baseline("resnet"), name="baseline"
         ), ly.TimeDistributed(
             ly.GlobalAveragePooling2D(), name="pooling2d"
         ), ly.Bidirectional(
@@ -108,25 +115,33 @@ def create_model():
         ly.Dropout(0.3), # Dropout Layer
         ly.Dense(len(CLASS_LIST), activation="softmax", kernel_regularizer=tf.keras.regularizers.l2(0.003)) # L2-Regularisierung
     ])
-    model.compile(optimizer=tf.keras.optimizers.Adam(), loss=tf.keras.losses.CategoricalCrossentropy(), metrics=["auc", "categorical_accuracy", "f1_score"])
+    model.compile(optimizer=tf.keras.optimizers.Adam(), loss="categorical_crossentropy", metrics=["auc", "categorical_accuracy", "f1_score"])
     return model
 
 model = create_model()
 model.summary()
 
-if pl.Path(IO_PATH + "/model.weights.h5").exists():
-    model.load_weights(IO_PATH + "/model.weights.h5")
-    print(f"Loaded initial weights from '{IO_PATH + '/model.weights.h5'}'")
+class FreezeBaselineCallback(tf.keras.callbacks.Callback):
+    def on_epoch_begin(self, epoch, logs = None):
+        if epoch >= 3:
+            print("Freezing baseline model")
+            self.model.get_layer("baseline").trainable = False
+
+#if pl.Path(IO_PATH + "/model.weights.h5").exists():
+#    model.load_weights(IO_PATH + "/model.weights.h5")
+#    print(f"Loaded initial weights from '{IO_PATH + '/model.weights.h5'}'")
 
 print("############################## TRAINING ##############################")
 
-history = model.fit(train_dataset, epochs=EPOCHS, validation_data=test_dataset, validation_freq=3, callbacks=[model_checkpoint, lr_scheduler, early_stopping])
+history = model.fit(train_dataset, epochs=EPOCHS, validation_data=test_dataset, validation_freq=3, callbacks=[model_checkpoint, lr_scheduler, early_stopping, FreezeBaselineCallback()])
 
 print("############################## STORING/CONVERT ##############################")
-print(f"Saving latest model state to '{IO_PATH + '/model_final.pb'}'")
-model.save(IO_PATH + "/model_final.pb")
+print(f"Saving latest model state to '{IO_PATH + '/model_final.keras'}'")
+model.save(IO_PATH + "/model_final.keras")
 
 print(f"Converting quantized model...")
-model_converter = tf.lite.TFLiteConverter.from_saved_model(IO_PATH + "/model_final.pb")
+model_converter = tf.lite.TFLiteConverter.from_saved_model(IO_PATH + "/model_final.keras")
 model_converter.optimizations = [tf.lite.Optimize.DEFAULT]
 model_quantized = model_converter.convert()
+model_quantized.summary()
+model.save(IO_PATH + "/model_final_quantized.keras")
