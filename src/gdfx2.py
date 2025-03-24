@@ -40,7 +40,8 @@ def df40_load_and_preprocess(path_sequence: list[str], label: int):
         image = tf.image.resize(image, [256, 256])
         image = image / 255.0
         return image
-    return tf.stack([_load_image(elem) for elem in tf.unstack(path_sequence)]), tf.one_hot(label, len(CLASS_LIST))
+    return tf.stack([_load_image(elem) for elem in tf.unstack(path_sequence)]), label
+    #return tf.stack([_load_image(elem) for elem in tf.unstack(path_sequence)]), tf.one_hot(label, len(CLASS_LIST))
 
 print("Enumerating items...")
 train_sequences, train_labels = df40_list_labeled_items(pl.Path(IO_PATH + "/df40/train").resolve())
@@ -108,7 +109,7 @@ def create_model():
         ly.Dropout(0.3), # Dropout Layer
         ly.Dense(len(CLASS_LIST), activation="softmax", kernel_regularizer=tf.keras.regularizers.l2(0.003)) # L2-Regularisierung
     ])
-    model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["auc", "categorical_accuracy", "f1_score"])
+    model.compile(optimizer=tf.keras.optimizers.Adam(), loss=tf.keras.losses.SparseCategoricalCrossentropy(), metrics=["auc", "categorical_accuracy", "f1_score"])
     return model
 
 model = create_model()
