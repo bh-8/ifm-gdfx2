@@ -97,9 +97,9 @@ early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=3
 def create_model_baseline(baseline_model_str: str):
     baseline_model = None
     if baseline_model_str == "resnet":
-        baseline_model = tf.keras.applications.ResNet50(weights="imagenet", include_top=False, input_shape=IMG_SIZE)
+        baseline_model = tf.keras.applications.ResNet50(weights="imagenet", input_shape=IMG_SIZE, pooling="avg", include_top=False)
     elif baseline_model_str == "efficientnet":
-        baseline_model = tf.keras.applications.EfficientNetB3(weights="imagenet", include_top=False, input_shape=IMG_SIZE)
+        baseline_model = tf.keras.applications.EfficientNetB3(weights="imagenet", input_shape=IMG_SIZE, pooling="avg", include_top=False)
     return baseline_model
 
 def create_model():
@@ -107,8 +107,6 @@ def create_model():
         ly.Input(shape=(SEQ_LEN, *IMG_SIZE)),
         ly.TimeDistributed(
             create_model_baseline("resnet"), name="baseline"
-        ), ly.TimeDistributed(
-            ly.GlobalAveragePooling2D(), name="pooling2d"
         ), ly.Bidirectional(
             ly.LSTM(256), name="bilstm"
         ),
