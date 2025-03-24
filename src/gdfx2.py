@@ -12,7 +12,7 @@ IO_PATH = "./io"
 IMG_SIZE = (256, 256, 3)
 SEQ_LEN = 12
 BATCH_SIZE = 4
-EPOCHS = 3
+EPOCHS = 6
 
 print(tf.config.list_physical_devices('GPU'))
 
@@ -54,8 +54,8 @@ random.shuffle(train_data)
 random.shuffle(test_data)
 train_sequences, train_labels = zip(*train_data)
 test_sequences, test_labels = zip(*test_data)
-train_sequences, train_labels = list(train_sequences)[:1000], list(train_labels)[:1000]
-test_sequences, test_labels = list(test_sequences)[:1000], list(test_labels)[:1000]
+train_sequences, train_labels = list(train_sequences), list(train_labels)
+test_sequences, test_labels = list(test_sequences), list(test_labels)
 
 print("Preprocessing items...")
 train_dataset = tf.data.Dataset.from_tensor_slices((train_sequences, train_labels))
@@ -81,6 +81,8 @@ test_dataset = test_dataset.prefetch(tf.data.AUTOTUNE)
 
 print("############################## MODEL ##############################")
 
+model_optimizer = tf.keras.optimizers.Adam(learning_rate = 1e-5)
+
 def create_baseline_model(feature_extractor_str: str):
     feature_extractor = None
     if feature_extractor_str == "resnet":
@@ -102,7 +104,7 @@ def create_model():
         ly.Dropout(0.3), # Dropout Layer
         ly.Dense(len(CLASS_LIST), activation="softmax", kernel_regularizer=tf.keras.regularizers.l2(0.003)) # L2-Regularisierung
     ])
-    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate = 1e-4), loss="categorical_crossentropy", metrics=["auc", "categorical_accuracy", "f1_score"])
+    model.compile(optimizer=model_optimizer, loss="categorical_crossentropy", metrics=["auc", "categorical_accuracy", "f1_score"])
     return model
 
 model = create_model()
@@ -123,9 +125,10 @@ early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=3
 
 class FreezeBaselineCallback(tf.keras.callbacks.Callback):
     def on_epoch_begin(self, epoch, logs = None):
-        if epoch == 1:
-            print("Freezing baseline model")
+        if epoch == 3:
             model.get_layer("baseline").trainable = False
+            model_optimizer.learning_rate.assign(1e-3)
+            print("Baseline Model freezed, updated learning rate.")
 
 #if pl.Path(IO_PATH + "/model.weights.h5").exists():
 #    model.load_weights(IO_PATH + "/model.weights.h5")
