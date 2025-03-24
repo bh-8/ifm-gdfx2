@@ -41,8 +41,7 @@ def df40_load_and_preprocess(path_sequence: list[str], label: int):
         image = tf.image.resize(image, [256, 256])
         image = image / 255.0
         return image
-    return tf.stack([_load_image(elem) for elem in tf.unstack(path_sequence)]), label
-    #return tf.stack([_load_image(elem) for elem in tf.unstack(path_sequence)]), tf.one_hot(label, len(CLASS_LIST))
+    return tf.stack([_load_image(elem) for elem in tf.unstack(path_sequence)]), tf.one_hot(label, len(CLASS_LIST))
 
 print("Enumerating items...")
 train_sequences, train_labels = df40_list_labeled_items(pl.Path(IO_PATH + "/df40/train").resolve())
@@ -74,8 +73,8 @@ for i, c in enumerate(CLASS_LIST):
 print(test_dataset_classes)
 
 print("Prefetching items...")
-train_dataset = train_dataset.map(df40_load_and_preprocess, num_parallel_calls=tf.data.AUTOTUNE).batch(BATCH_SIZE) # .shuffle(int(float(train_dataset.cardinality()) * 0.025), reshuffle_each_iteration=True)
-test_dataset = test_dataset.map(df40_load_and_preprocess, num_parallel_calls=tf.data.AUTOTUNE).batch(BATCH_SIZE) # .shuffle(int(float(test_dataset.cardinality()) * 0.025), reshuffle_each_iteration=True)
+train_dataset = train_dataset.map(df40_load_and_preprocess, num_parallel_calls=tf.data.AUTOTUNE).shuffle(int(float(train_dataset.cardinality()) * 0.025), reshuffle_each_iteration=True).batch(BATCH_SIZE)
+test_dataset = test_dataset.map(df40_load_and_preprocess, num_parallel_calls=tf.data.AUTOTUNE).shuffle(int(float(test_dataset.cardinality()) * 0.025), reshuffle_each_iteration=True).batch(BATCH_SIZE)
 train_dataset = train_dataset.prefetch(tf.data.AUTOTUNE)
 test_dataset = test_dataset.prefetch(tf.data.AUTOTUNE)
 
