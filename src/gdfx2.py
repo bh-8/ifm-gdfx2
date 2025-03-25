@@ -11,7 +11,7 @@ CLASS_LIST        = ["original", "face_swap", "face_reenact"]
 IO_PATH           = "./io"
 IMG_SIZE          = (256, 256, 3)
 SEQ_LEN           = 12
-BATCH_SIZE        = 4
+BATCH_SIZE        = 8
 EPOCHS            = 9
 EPOCHS_PATIENCE   = 3
 LEARNING_RATE     = 1e-3
@@ -145,10 +145,10 @@ print("############################## TRAINING ##############################")
 
 print(tf.config.list_physical_devices("GPU"))
 
-history = model.fit(train_dataset, epochs=EPOCHS, class_weight=class_weights, validation_data=test_dataset, validation_freq=EPOCHS_PATIENCE, callbacks=[model_checkpoint, early_stopping, FreezeBaselineCallback()])
+history = model.fit(train_dataset, epochs=EPOCHS, class_weight=class_weights, validation_data=test_dataset, validation_freq=EPOCHS_PATIENCE, validation_steps=(len(test_dataset)/(2 * BATCH_SIZE)), callbacks=[model_checkpoint, early_stopping, FreezeBaselineCallback()])
 
 print("############################## STORING ##############################")
 
 store_path: str = IO_PATH + f"/model-{FEATURE_EXTRACTOR}-{EPOCHS}ep-{SEQ_LEN}sl.keras"
-print(f"Saving latest model state to '{store_path}'")
+print(f"Saving final model state to '{store_path}'")
 model.save(store_path)
