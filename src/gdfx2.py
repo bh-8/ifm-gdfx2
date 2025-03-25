@@ -23,12 +23,10 @@ FEATURE_EXTRACTOR = "resnet"
 
 print("############################## MODEL ##############################")
 
-print(tf.config.list_physical_devices("GPU"))
 strategy = tf.distribute.MirroredStrategy()
-print(f"devices: {strategy.num_replicas_in_sync}")
 
-import sys
-sys.exit(0)
+print(tf.config.list_physical_devices("GPU"))
+print(f"available devices: {strategy.num_replicas_in_sync}")
 
 # Adam-Optimizer (inkl. opt. Weight Decay/adapt. LR)
 #model_optimizer = tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE)
@@ -59,7 +57,8 @@ def create_model():
     model.compile(optimizer=model_optimizer, loss="categorical_crossentropy", metrics=["auc", "categorical_accuracy", "f1_score"])
     return model
 
-model = create_model()
+with strategy.scope():
+    model = create_model()
 
 # Model Checkpoint
 model_checkpoint = tf.keras.callbacks.ModelCheckpoint(filepath=IO_PATH + "/model.weights.h5", save_weights_only=True, verbose=1)
