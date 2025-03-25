@@ -103,7 +103,7 @@ def df40_load_and_preprocess(path_sequence: list[str], label: int):
         image = tf.image.resize(image, [256, 256])
         #image = image / 255.0
         return image
-    return tf.stack([tf.keras.applications.resnet.preprocess_input(_load_image(image_path)) for elem in tf.unstack(path_sequence)] if FEATURE_EXTRACTOR == "resnet" else [_load_image(elem) for elem in tf.unstack(path_sequence)]), tf.one_hot(label, len(CLASS_LIST))
+    return tf.stack([tf.keras.applications.resnet.preprocess_input(_load_image(elem)) for elem in tf.unstack(path_sequence)] if FEATURE_EXTRACTOR == "resnet" else [_load_image(elem) for elem in tf.unstack(path_sequence)]), tf.one_hot(label, len(CLASS_LIST))
 
 print("Enumerating items...")
 train_sequences, train_labels = df40_list_labeled_items(pl.Path(IO_PATH + "/df40/train").resolve())
