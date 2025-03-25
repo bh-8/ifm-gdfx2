@@ -29,6 +29,7 @@ print(f"Converting quantized model...")
 model_converter = tf.lite.TFLiteConverter.from_keras_model(model_keras)
 model_converter.optimizations = [tf.lite.Optimize.DEFAULT]
 tflite_model = model_converter.convert()
+print(f"tflite model: {len(tflite_model)} bytes")
 with open(IO_PATH + "/model_final.tflite", "wb") as f:
     f.write(tflite_model)
 
