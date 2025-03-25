@@ -153,7 +153,9 @@ model.summary()
 
 print("############################## TRAINING ##############################")
 
-history = model.fit(train_dataset, epochs=EPOCHS, class_weight=class_weights, validation_data=test_dataset, validation_freq=EPOCHS_PATIENCE, validation_steps=int(len(test_dataset)/(2 * BATCH_SIZE)), callbacks=[model_checkpoint, early_stopping, FreezeBaselineCallback()])
+print(f"validation_steps = int(len(test_dataset)/(2 * BATCH_SIZE)) = {int(len(test_dataset)/(2 * BATCH_SIZE))}")
+
+history = model.fit(train_dataset, epochs=EPOCHS, class_weight=class_weights, validation_data=test_dataset, validation_freq=EPOCHS_PATIENCE, callbacks=[model_checkpoint, early_stopping, FreezeBaselineCallback()])
 
 print("############################## STORING ##############################")
 
