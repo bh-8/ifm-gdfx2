@@ -1,57 +1,96 @@
-p619996@gpu-kong:~/storage-private/ifm-gdfx2$ CUDA_VISIBLE_DEVICES=7 python3 -u src/gdfx2.py
-2025-03-09 21:21:03.998983: E external/local_xla/xla/stream_executor/cuda/cuda_fft.cc:477] Unable to register cuFFT factory: Attempting to register factory for plugin cuFFT when one has already been registered
+CUDA_VISIBLE_DEVICES=4 python3 -u src/gdfx2.py 
+2025-03-24 22:35:57.975894: E external/local_xla/xla/stream_executor/cuda/cuda_fft.cc:477] Unable to register cuFFT factory: Attempting to register factory for plugin cuFFT when one has already been registered
 WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
-E0000 00:00:1741551664.031351 2382390 cuda_dnn.cc:8310] Unable to register cuDNN factory: Attempting to register factory for plugin cuDNN when one has already been registered
-E0000 00:00:1741551664.041474 2382390 cuda_blas.cc:1418] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
-2025-03-09 21:21:04.068356: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+E0000 00:00:1742852158.008582  556232 cuda_dnn.cc:8310] Unable to register cuDNN factory: Attempting to register factory for plugin cuDNN when one has already been registered
+E0000 00:00:1742852158.018586  556232 cuda_blas.cc:1418] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
+2025-03-24 22:35:58.045390: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
 To enable the following instructions: AVX2 FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
 [PhysicalDevice(name='/physical_device:GPU:0', device_type='GPU')]
 ############################## DATASET ##############################
 Enumerating items...
-Shuffling items...
 Preprocessing items...
-I0000 00:00:1741551677.522877 2382390 gpu_device.cc:2022] Created device /job:localhost/replica:0/task:0/device:GPU:0 with 9617 MB memory:  -> device: 0, name: NVIDIA GeForce RTX 2080 Ti, pci bus id: 0000:10:00.0, compute capability: 7.5
-Batching items...
-2025-03-09 21:29:14.372716: I tensorflow/core/framework/local_rendezvous.cc:405] Local rendezvous is aborting with status: OUT_OF_RANGE: End of sequence
-2025-03-09 21:42:26.181864: I tensorflow/core/framework/local_rendezvous.cc:405] Local rendezvous is aborting with status: OUT_OF_RANGE: End of sequence
+I0000 00:00:1742852176.442518  556232 gpu_device.cc:2022] Created device /job:localhost/replica:0/task:0/device:GPU:0 with 9617 MB memory:  -> device: 0, name: NVIDIA GeForce RTX 2080 Ti, pci bus id: 0000:0a:00.0, compute capability: 7.5
+2025-03-24 22:36:19.430984: I tensorflow/core/framework/local_rendezvous.cc:405] Local rendezvous is aborting with status: OUT_OF_RANGE: End of sequence
+2025-03-24 22:36:21.718183: I tensorflow/core/framework/local_rendezvous.cc:405] Local rendezvous is aborting with status: OUT_OF_RANGE: End of sequence
 Train Dataset:
- 0 original -> 999
- 1 face_swap -> 6510
- 2 face_reenact -> 8467
-[2 1 2 ... 2 2 1]
+ original: 999x
+ face_swap: 6509x
+ face_reenact: 8460x
 Test Dataset:
- 0 original -> 999
- 1 face_swap -> 7075
- 2 face_reenact -> 9423
-[1 2 2 ... 2 2 2]
+ original: 999x
+ face_swap: 7070x
+ face_reenact: 9405x
+Prefetching items...
 ############################## MODEL ##############################
 Model: "sequential"
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┓
 ┃ Layer (type)                         ┃ Output Shape                ┃         Param # ┃
 ┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━┩
-│ resnet (TimeDistributed)             │ (None, 8, 8, 8, 2048)       │      23,587,712 │
+│ baseline (TimeDistributed)           │ (None, 12, 2048)            │      23,587,712 │
 ├──────────────────────────────────────┼─────────────────────────────┼─────────────────┤
-│ pooling2d (TimeDistributed)          │ (None, 8, 2048)             │               0 │
+│ bilstm (Bidirectional)               │ (None, 512)                 │       4,720,640 │
 ├──────────────────────────────────────┼─────────────────────────────┼─────────────────┤
-│ bilstm (Bidirectional)               │ (None, 256)                 │       2,229,248 │
+│ dropout (Dropout)                    │ (None, 512)                 │               0 │
 ├──────────────────────────────────────┼─────────────────────────────┼─────────────────┤
-│ dense (Dense)                        │ (None, 3)                   │             771 │
+│ dense (Dense)                        │ (None, 3)                   │           1,539 │
 └──────────────────────────────────────┴─────────────────────────────┴─────────────────┘
- Total params: 25,817,731 (98.49 MB)
- Trainable params: 2,230,019 (8.51 MB)
- Non-trainable params: 23,587,712 (89.98 MB)
+ Total params: 28,309,891 (107.99 MB)
+ Trainable params: 28,256,771 (107.79 MB)
+ Non-trainable params: 53,120 (207.50 KB)
 ############################## TRAINING ##############################
-Epoch 1/3
-I0000 00:00:1741552991.140141 2382432 cuda_dnn.cc:529] Loaded cuDNN version 90300
-1332/1332 ━━━━━━━━━━━━━━━━━━━━ 0s 675ms/step - auc: 0.7701 - categorical_accuracy: 0.5710 - f1_score: 0.3736 - loss: 0.8649 - precision: 0.5865 - recall: 0.4663
+Epoch 1/6
+2025-03-24 22:39:15.174683: I tensorflow/core/kernels/data/shuffle_dataset_op.cc:450] ShuffleDatasetV3:5: Filling up shuffle buffer (this may take a while): 192 of 399
+2025-03-24 22:39:25.187692: I tensorflow/core/kernels/data/shuffle_dataset_op.cc:450] ShuffleDatasetV3:5: Filling up shuffle buffer (this may take a while): 387 of 399
+2025-03-24 22:39:25.603402: I tensorflow/core/kernels/data/shuffle_dataset_op.cc:480] Shuffle buffer filled.
+I0000 00:00:1742852366.416385  556655 cuda_dnn.cc:529] Loaded cuDNN version 90300
+2025-03-24 22:39:30.773471: W external/local_xla/xla/tsl/framework/bfc_allocator.cc:306] Allocator (GPU_0_bfc) ran out of memory trying to allocate 4.55GiB with freed_by_count=0. The caller indicates that this is not a failure, but this may mean that there could be performance gains if more memory were available.
+2025-03-24 22:39:31.091638: W external/local_xla/xla/tsl/framework/bfc_allocator.cc:306] Allocator (GPU_0_bfc) ran out of memory trying to allocate 4.31GiB with freed_by_count=0. The caller indicates that this is not a failure, but this may mean that there could be performance gains if more memory were available.
+3992/3992 ━━━━━━━━━━━━━━━━━━━━ 0s 867ms/step - auc: 0.8256 - categorical_accuracy: 0.6395 - f1_score: 0.4496 - loss: 0.7929      
 Epoch 1: saving model to ./io/model.weights.h5
-1332/1332 ━━━━━━━━━━━━━━━━━━━━ 1860s 1s/step - auc: 0.7702 - categorical_accuracy: 0.5710 - f1_score: 0.3737 - loss: 0.8649 - precision: 0.5866 - recall: 0.4664 - val_auc: 0.8114 - val_categorical_accuracy: 0.5638 - val_f1_score: 0.2912 - val_loss: 0.8915 - val_precision: 0.5699 - val_recall: 0.5513
-Epoch 2/3
-1332/1332 ━━━━━━━━━━━━━━━━━━━━ 0s 618ms/step - auc: 0.8414 - categorical_accuracy: 0.6710 - f1_score: 0.4571 - loss: 0.7527 - precision: 0.6866 - recall: 0.62752025-03-09 22:27:14.503423: W tensorflow/core/kernels/data/prefetch_autotuner.cc:52] Prefetch autotuner tried to allocate 134204672 bytes after encountering the first element of size 134204672 bytes.This already causes the autotune ram budget to be exceeded. To stay within the ram budget, either increase the ram budget or reduce element size
-
+/srv/storage/p619996/miniforge3/envs/ifm/lib/python3.12/site-packages/keras/src/callbacks/callback_list.py:145: UserWarning: Learning rate reduction is conditioned on metric `val_loss` which is not available. Available metrics are: auc,categorical_accuracy,f1_score,loss,learning_rate.
+  callback.on_epoch_end(epoch, logs)
+/srv/storage/p619996/miniforge3/envs/ifm/lib/python3.12/site-packages/keras/src/callbacks/early_stopping.py:153: UserWarning: Early stopping conditioned on metric `val_loss` which is not available. Available metrics are: auc,categorical_accuracy,f1_score,loss,learning_rate
+  current = self.get_monitor_value(logs)
+3992/3992 ━━━━━━━━━━━━━━━━━━━━ 3651s 868ms/step - auc: 0.8256 - categorical_accuracy: 0.6395 - f1_score: 0.4496 - loss: 0.7929 - learning_rate: 1.0000e-06
+Baseline Model freezed, updated learning rate.
+Epoch 2/6
+2025-03-24 23:37:26.339189: I tensorflow/core/kernels/data/shuffle_dataset_op.cc:450] ShuffleDatasetV3:5: Filling up shuffle buffer (this may take a while): 127 of 399
+2025-03-24 23:37:45.802342: I tensorflow/core/kernels/data/shuffle_dataset_op.cc:450] ShuffleDatasetV3:5: Filling up shuffle buffer (this may take a while): 381 of 399
+2025-03-24 23:37:46.968849: I tensorflow/core/kernels/data/shuffle_dataset_op.cc:480] Shuffle buffer filled.
+3992/3992 ━━━━━━━━━━━━━━━━━━━━ 0s 876ms/step - auc: 0.7596 - categorical_accuracy: 0.5527 - f1_score: 0.3691 - loss: 0.9037    
 Epoch 2: saving model to ./io/model.weights.h5
-1332/1332 ━━━━━━━━━━━━━━━━━━━━ 1728s 1s/step - auc: 0.8414 - categorical_accuracy: 0.6710 - f1_score: 0.4571 - loss: 0.7527 - precision: 0.6866 - recall: 0.6275 - val_auc: 0.8369 - val_categorical_accuracy: 0.6419 - val_f1_score: 0.4162 - val_loss: 0.7479 - val_precision: 0.6572 - val_recall: 0.5983
-Epoch 3/3
-1332/1332 ━━━━━━━━━━━━━━━━━━━━ 0s 625ms/step - auc: 0.8508 - categorical_accuracy: 0.6842 - f1_score: 0.4678 - loss: 0.7325 - precision: 0.7034 - recall: 0.6484
+3992/3992 ━━━━━━━━━━━━━━━━━━━━ 3532s 877ms/step - auc: 0.7596 - categorical_accuracy: 0.5528 - f1_score: 0.3691 - loss: 0.9037 - learning_rate: 0.0010
+Epoch 3/6
+2025-03-25 00:36:18.303908: I tensorflow/core/kernels/data/shuffle_dataset_op.cc:450] ShuffleDatasetV3:5: Filling up shuffle buffer (this may take a while): 119 of 399
+2025-03-25 00:36:37.260198: I tensorflow/core/kernels/data/shuffle_dataset_op.cc:480] Shuffle buffer filled.
+3992/3992 ━━━━━━━━━━━━━━━━━━━━ 0s 876ms/step - auc: 0.8863 - categorical_accuracy: 0.7415 - f1_score: 0.5092 - loss: 0.64622025-03-25 01:35:28.112450: I tensorflow/core/kernels/data/shuffle_dataset_op.cc:450] ShuffleDatasetV3:8: Filling up shuffle buffer (this may take a while): 98 of 436
+2025-03-25 01:35:48.017891: I tensorflow/core/kernels/data/shuffle_dataset_op.cc:450] ShuffleDatasetV3:8: Filling up shuffle buffer (this may take a while): 346 of 436
+2025-03-25 01:35:54.850837: I tensorflow/core/kernels/data/shuffle_dataset_op.cc:480] Shuffle buffer filled.
 Epoch 3: saving model to ./io/model.weights.h5
-1332/1332 ━━━━━━━━━━━━━━━━━━━━ 1746s 1s/step - auc: 0.8508 - categorical_accuracy: 0.6842 - f1_score: 0.4678 - loss: 0.7325 - precision: 0.7034 - recall: 0.6484 - val_auc: 0.8414 - val_categorical_accuracy: 0.6493 - val_f1_score: 0.4279 - val_loss: 0.7384 - val_precision: 0.6664 - val_recall: 0.6029
+3992/3992 ━━━━━━━━━━━━━━━━━━━━ 5567s 1s/step - auc: 0.8863 - categorical_accuracy: 0.7415 - f1_score: 0.5092 - loss: 0.6462 - val_auc: 0.8519 - val_categorical_accuracy: 0.6564 - val_f1_score: 0.4309 - val_loss: 0.7359 - learning_rate: 0.0010
+Epoch 4/6
+2025-03-25 02:09:04.861444: I tensorflow/core/kernels/data/shuffle_dataset_op.cc:450] ShuffleDatasetV3:5: Filling up shuffle buffer (this may take a while): 113 of 399
+2025-03-25 02:09:24.616205: I tensorflow/core/kernels/data/shuffle_dataset_op.cc:450] ShuffleDatasetV3:5: Filling up shuffle buffer (this may take a while): 396 of 399
+2025-03-25 02:09:24.616294: I tensorflow/core/kernels/data/shuffle_dataset_op.cc:480] Shuffle buffer filled.
+3992/3992 ━━━━━━━━━━━━━━━━━━━━ 0s 851ms/step - auc: 0.9005 - categorical_accuracy: 0.7637 - f1_score: 0.5250 - loss: 0.6011    
+Epoch 4: saving model to ./io/model.weights.h5
+3992/3992 ━━━━━━━━━━━━━━━━━━━━ 3429s 851ms/step - auc: 0.9005 - categorical_accuracy: 0.7637 - f1_score: 0.5250 - loss: 0.6011 - learning_rate: 0.0010
+Epoch 5/6
+2025-03-25 03:06:13.596619: I tensorflow/core/kernels/data/shuffle_dataset_op.cc:450] ShuffleDatasetV3:5: Filling up shuffle buffer (this may take a while): 112 of 399
+2025-03-25 03:06:23.777625: I tensorflow/core/kernels/data/shuffle_dataset_op.cc:450] ShuffleDatasetV3:5: Filling up shuffle buffer (this may take a while): 249 of 399
+2025-03-25 03:06:33.843703: I tensorflow/core/kernels/data/shuffle_dataset_op.cc:450] ShuffleDatasetV3:5: Filling up shuffle buffer (this may take a while): 387 of 399
+2025-03-25 03:06:34.563422: I tensorflow/core/kernels/data/shuffle_dataset_op.cc:480] Shuffle buffer filled.
+3992/3992 ━━━━━━━━━━━━━━━━━━━━ 0s 851ms/step - auc: 0.9130 - categorical_accuracy: 0.7838 - f1_score: 0.5387 - loss: 0.5604    
+Epoch 5: saving model to ./io/model.weights.h5
+3992/3992 ━━━━━━━━━━━━━━━━━━━━ 3434s 852ms/step - auc: 0.9130 - categorical_accuracy: 0.7838 - f1_score: 0.5387 - loss: 0.5604 - learning_rate: 0.0010
+Epoch 6/6
+2025-03-25 04:03:28.038433: I tensorflow/core/kernels/data/shuffle_dataset_op.cc:450] ShuffleDatasetV3:5: Filling up shuffle buffer (this may take a while): 116 of 399
+2025-03-25 04:03:38.305450: I tensorflow/core/kernels/data/shuffle_dataset_op.cc:450] ShuffleDatasetV3:5: Filling up shuffle buffer (this may take a while): 259 of 399
+2025-03-25 04:03:48.710075: I tensorflow/core/kernels/data/shuffle_dataset_op.cc:450] ShuffleDatasetV3:5: Filling up shuffle buffer (this may take a while): 396 of 399
+2025-03-25 04:03:48.710161: I tensorflow/core/kernels/data/shuffle_dataset_op.cc:480] Shuffle buffer filled.
+3992/3992 ━━━━━━━━━━━━━━━━━━━━ 0s 851ms/step - auc: 0.9160 - categorical_accuracy: 0.7909 - f1_score: 0.5434 - loss: 0.55022025-03-25 05:00:35.404335: I tensorflow/core/kernels/data/shuffle_dataset_op.cc:450] ShuffleDatasetV3:8: Filling up shuffle buffer (this may take a while): 107 of 436
+2025-03-25 05:00:45.788484: I tensorflow/core/kernels/data/shuffle_dataset_op.cc:450] ShuffleDatasetV3:8: Filling up shuffle buffer (this may take a while): 235 of 436
+2025-03-25 05:00:55.864298: I tensorflow/core/kernels/data/shuffle_dataset_op.cc:450] ShuffleDatasetV3:8: Filling up shuffle buffer (this may take a while): 360 of 436
+2025-03-25 05:01:01.280488: I tensorflow/core/kernels/data/shuffle_dataset_op.cc:480] Shuffle buffer filled.
+Epoch 6: saving model to ./io/model.weights.h5
+3992/3992 ━━━━━━━━━━━━━━━━━━━━ 5180s 1s/step - auc: 0.9160 - categorical_accuracy: 0.7909 - f1_score: 0.5434 - loss: 0.5502 - val_auc: 0.8854 - val_categorical_accuracy: 0.7187 - val_f1_score: 0.4793 - val_loss: 0.6929 - learning_rate: 0.0010

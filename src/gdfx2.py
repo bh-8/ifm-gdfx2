@@ -20,6 +20,16 @@ LEARNING_RATE_DEFAULT = 1e-3
 WEIGHT_DECAY          = 3e-3
 DROPOUT               = 3e-1
 
+print(f"Converting quantized model...")
+model_converter = tf.lite.TFLiteConverter.from_saved_model(IO_PATH + "/model_final")
+model_converter.optimizations = [tf.lite.Optimize.DEFAULT]
+model_quantized = model_converter.convert()
+model_quantized.summary()
+model.save(IO_PATH + "/model_final_quantized.keras")
+
+import sys
+sys.exit(0)
+
 print("############################## MODEL ##############################")
 
 # Adam-Optimizer (opt. Weight Decay)
@@ -141,11 +151,4 @@ history = model.fit(train_dataset, epochs=EPOCHS, validation_data=test_dataset, 
 print("############################## STORING/CONVERT ##############################")
 
 print(f"Saving latest model state to '{IO_PATH + '/model_final.keras'}'")
-model.save(IO_PATH + "/model_final.keras", save_format="tf")
-
-print(f"Converting quantized model...")
-model_converter = tf.lite.TFLiteConverter.from_saved_model(IO_PATH + "/model_final.keras")
-model_converter.optimizations = [tf.lite.Optimize.DEFAULT]
-model_quantized = model_converter.convert()
-model_quantized.summary()
-model.save(IO_PATH + "/model_final_quantized.keras")
+model.save(IO_PATH + "/model_final.keras")
