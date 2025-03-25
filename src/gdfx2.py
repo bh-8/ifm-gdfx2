@@ -134,18 +134,22 @@ early_stopping = tf.keras.callbacks.EarlyStopping(monitor="f1_score", patience=E
 # Custom Callback to freeze baseline weights and update learning rate during training
 class FreezeBaselineCallback(tf.keras.callbacks.Callback):
     def on_epoch_begin(self, epoch, logs=None):
+        print("Mark A")
         model.get_layer("baseline").trainable = False
 
         freezing_layers: dict = {0: 32, 1: 16, 2: 8}
         fe_layer = model.get_layer("baseline").layer
 
+        print("Mark B")
         if epoch in freezing_layers:
+            print("Mark C")
             for layer in fe_layer.layers[-freezing_layers[epoch]:]:
                 layer.trainable = True
             new_lr = (LEARNING_RATE / 10) / (2 ** epoch)
             model_optimizer.learning_rate.assign(new_lr)
             print(f"Epoch {epoch + 1}: Unfreezed {freezing_layers[epoch]} layers of baseline model, set learning rate to {new_lr}.")
         else:
+            print("Mark D")
             new_lr = LEARNING_RATE / (2 ** (epoch - len(freezing_layers.keys())))
             model_optimizer.learning_rate.assign(new_lr)
             print(f"Epoch {epoch + 1}: Freezed all layers of baseline model, set learning rate to {new_lr}.")
@@ -154,10 +158,7 @@ model.summary()
 
 print("############################## TRAINING ##############################")
 
-print(f"validation_steps = int(len(test_dataset)/(2 * BATCH_SIZE)) = {int(len(test_dataset)/(2 * BATCH_SIZE))}")
-
-# , class_weight=class_weights
-history = model.fit(train_dataset, epochs=EPOCHS, validation_data=test_dataset, validation_freq=EPOCHS_PATIENCE, callbacks=[model_checkpoint, early_stopping, FreezeBaselineCallback()])
+history = model.fit(train_dataset, epochs=EPOCHS, class_weight=class_weights, validation_data=test_dataset, validation_freq=EPOCHS_PATIENCE, callbacks=[model_checkpoint, early_stopping, FreezeBaselineCallback()])
 
 print("############################## STORING ##############################")
 
