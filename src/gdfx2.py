@@ -13,54 +13,34 @@ IMG_SIZE              = (256, 256, 3)
 SEQ_LEN               = 12
 BATCH_SIZE            = 4
 EPOCHS                = 6
-EPOCHS_BASELINE       = 1
 EPOCHS_PATIENCE       = 3
-LEARNING_RATE_MIN     = 1e-6
-LEARNING_RATE_DEFAULT = 1e-3
+LEARNING_RATE         = 1e-3
 WEIGHT_DECAY          = 3e-3
 DROPOUT               = 3e-1
-
-print("############################## CONVERSION ##############################")
-
-print(f"Loading model...")
-model_keras = tf.keras.models.load_model(IO_PATH + "/model_final.keras")
-
-print(f"Converting quantized model...")
-model_converter = tf.lite.TFLiteConverter.from_keras_model(model_keras)
-model_converter.optimizations = [tf.lite.Optimize.DEFAULT]
-tflite_model = None
-try:
-    tflite_model = model_converter.convert()
-    print(f"tflite model: {len(tflite_model)} bytes")
-    with open(IO_PATH + "/model_final.tflite", "wb") as f:
-        f.write(tflite_model)
-except Exception as e:
-    print(f"Conversion error: {e}")
-
-import sys
-sys.exit(0)
+FEATURE_EXTRACTOR     = "resnet"
 
 print("############################## MODEL ##############################")
 
 # Adam-Optimizer (opt. Weight Decay)
-#model_optimizer = tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE_MIN)
-model_optimizer = tf.keras.optimizers.AdamW(learning_rate=LEARNING_RATE_MIN, weight_decay=WEIGHT_DECAY)
+#model_optimizer = tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE)
+model_optimizer = tf.keras.optimizers.AdamW(learning_rate=LEARNING_RATE, weight_decay=WEIGHT_DECAY)
 
-def create_feature_extractor(feature_extractor_str: str):
+def create_feature_extractor():
     feature_extractor = None
-    if feature_extractor_str == "resnet":
+    if FEATURE_EXTRACTOR == "resnet":
         feature_extractor = tf.keras.applications.ResNet50(weights="imagenet", input_shape=IMG_SIZE, pooling="avg", include_top=False)
-    elif feature_extractor_str == "efficientnet":
+    elif FEATURE_EXTRACTOR == "efficientnet":
         feature_extractor = tf.keras.applications.EfficientNetB3(weights="imagenet", input_shape=IMG_SIZE, pooling="avg", include_top=False)
     else:
         return None
+    feature_extractor.trainable = False
     return feature_extractor
 
 def create_model():
     model = tf.keras.Sequential([
         ly.Input(shape=(SEQ_LEN, *IMG_SIZE)),
         ly.TimeDistributed(
-            create_feature_extractor("resnet"), name="baseline"
+            create_feature_extractor(), name="baseline"
         ), ly.Bidirectional(
             ly.LSTM(256), name="bilstm"
         ),
@@ -75,19 +55,25 @@ model = create_model()
 # Model Checkpoint
 model_checkpoint = tf.keras.callbacks.ModelCheckpoint(filepath=IO_PATH + "/model.weights.h5", save_weights_only=True, verbose=1)
 
-# LR-Scheduler (ReduceLROnPlateau)
-lr_scheduler = tf.keras.callbacks.ReduceLROnPlateau(monitor="val_loss", factor=0.5, patience=EPOCHS_PATIENCE, min_lr=LEARNING_RATE_MIN)
-
 # Early-Stopping (Training, bis Modell sich nicht weiter verbessert)
 early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=EPOCHS_PATIENCE, restore_best_weights=True)
 
 # Custom Callback to freeze baseline weights and update learning rate during training
 class FreezeBaselineCallback(tf.keras.callbacks.Callback):
     def on_epoch_begin(self, epoch, logs=None):
-        if epoch == EPOCHS_BASELINE:
-            model.get_layer("baseline").trainable = False
-            model_optimizer.learning_rate.assign(LEARNING_RATE_DEFAULT)
-            print("Baseline Model freezed, updated learning rate.")
+        model.get_layer("baseline").trainable = False
+        freezing_layers: dict = {0: 30, 1: 20, 2: 10}
+
+        if epoch in freezing_layers:
+            for layer in model.get_layer("baseline").layers[-freezing_layers[epoch]:]:
+                layer.trainable = True
+            new_lr = LEARNING_RATE / (2 ** epoch)
+            model_optimizer.learning_rate.assign(new_lr)
+            print(f"Epoch {epoch + 1}: Unfreezed {freezing_layers[epoch]} layers of baseline model, set learning rate to {new_lr}.")
+        else:
+            model_optimizer.learning_rate.assign(LEARNING_RATE)
+            print(f"Epoch {epoch + 1}: Freezed all layers of baseline model, set learning rate to {LEARNING_RATE}.")
+        print(f"  trainable variables: {model.trainable_variables}")
 
 model.summary()
 
@@ -114,23 +100,19 @@ def df40_load_and_preprocess(path_sequence: list[str], label: int):
     def _load_image(image_path: str):
         image = tf.io.read_file(image_path)
         image = tf.image.decode_png(image, channels=3)
-        image = tf.image.resize(image, [256, 256])
-        image = image / 255.0
+        #image = tf.image.resize(image, [256, 256])
+        #image = image / 255.0
         return image
-    return tf.stack([_load_image(elem) for elem in tf.unstack(path_sequence)]), tf.one_hot(label, len(CLASS_LIST))
+    return tf.stack([tf.keras.applications.resnet.preprocess_input(_load_image(image_path)) for elem in tf.unstack(path_sequence)] if FEATURE_EXTRACTOR == "resnet" else [_load_image(elem) for elem in tf.unstack(path_sequence)]), tf.one_hot(label, len(CLASS_LIST))
 
 print("Enumerating items...")
 train_sequences, train_labels = df40_list_labeled_items(pl.Path(IO_PATH + "/df40/train").resolve())
 test_sequences, test_labels = df40_list_labeled_items(pl.Path(IO_PATH + "/df40/test").resolve())
 
 train_data = list(zip(train_sequences, train_labels))
-test_data = list(zip(test_sequences, test_labels))
 random.shuffle(train_data)
-random.shuffle(test_data)
 train_sequences, train_labels = zip(*train_data)
-test_sequences, test_labels = zip(*test_data)
 train_sequences, train_labels = list(train_sequences), list(train_labels)
-test_sequences, test_labels = list(test_sequences), list(test_labels)
 
 print("Preprocessing items...")
 train_dataset = tf.data.Dataset.from_tensor_slices((train_sequences, train_labels))
@@ -141,6 +123,11 @@ test_dataset_classes = collections.Counter([int(l.numpy()) for (_, l) in test_da
 print("Train Dataset:")
 for i, c in enumerate(CLASS_LIST):
     print(f"  {c}: {train_dataset_classes[i]}x")
+print(f"  total: {len(train_dataset)}")
+#class_weight_dict = {i: total_instances / (count * len(label_counts)) for i, count in label_counts.items()}
+
+import sys
+sys.exit(0)
 
 print("Test Dataset:")
 for i, c in enumerate(CLASS_LIST):
@@ -160,5 +147,6 @@ history = model.fit(train_dataset, epochs=EPOCHS, validation_data=test_dataset, 
 
 print("############################## STORING ##############################")
 
-print(f"Saving latest model state to '{IO_PATH + '/model_final.keras'}'")
-model.save(IO_PATH + "/model_final.keras")
+store_path: str = IO_PATH + f"/model-{FEATURE_EXTRACTOR}-{EPOCHS}ep-{SEQ_LEN}sl.keras"
+print(f"Saving latest model state to '{store_path}'")
+model.save(store_path)

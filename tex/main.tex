@@ -53,11 +53,6 @@
         \item DropOut-Layer
         \item Dense-Layer (Softmax, L2-Regularisierung, Kernel/Bias)
     \end{itemize}
-    Verschiedene experimentelle Architekturen:
-    \begin{itemize}
-        \item Pruning % https://www.tensorflow.org/model_optimization/guide/pruning/pruning_with_keras
-        \item Quantisierung % https://medium.com/game-of-bits/optimizing-tensorflow-models-using-quantization-fb4d09b46fac
-    \end{itemize}
     \subsection{Training}
     \begin{itemize}
         \item Optimizer (adam)
@@ -86,7 +81,6 @@
     \section{Evaluation}
     \begin{itemize}
         \item Model Performance anhand von Metriken
-        \item Tabelle zur Auswertung und Vergleich mit Quantisierung/Pruning
     \end{itemize}
 
     \section{Zusammenfassung}
@@ -104,5 +98,11 @@
     \section*{Anhang}
     \begin{itemize}
         \item Quellcodeauszüge
+        \item umgesetzt:
+        \item Normalisierung gefixed (Resnet/EfficientNet)
+        \item LR-Scheduler raus (bereits durch Adam abgedeckt), manuelle Anpassung der Lernrate/weight freezing
+    \end{itemize}
+    \begin{itemize}
+        \item Weitere Frage: Regularisierung sinnvoll? Bias/Kernel
     \end{itemize}
 \end{document}
