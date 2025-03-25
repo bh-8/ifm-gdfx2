@@ -24,11 +24,11 @@ print("############################## CONVERSION ##############################"
 
 print(f"Converting quantized model...")
 model_keras = tf.keras.models.load_model(IO_PATH + "/model_final.keras")
-model_converter = tf.lite.TFLiteConverter.from_keras_model(model_keras)
-model_converter.optimizations = [tf.lite.Optimize.DEFAULT]
-model_quantized = model_converter.convert()
-with open(IO_PATH + "/model_final.tflite", "wb") as f:
-    f.write(tflite_model)
+#model_converter = tf.lite.TFLiteConverter.from_keras_model(model_keras)
+#model_converter.optimizations = [tf.lite.Optimize.DEFAULT]
+#model_quantized = model_converter.convert()
+#with open(IO_PATH + "/model_final.tflite", "wb") as f:
+#    f.write(tflite_model)
 
 import sys
 sys.exit(0)
