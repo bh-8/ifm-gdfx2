@@ -7,18 +7,69 @@ import tensorflow as tf
 import tensorflow.keras.layers as ly
 import tensorflow_datasets as tfds
 
-CLASS_LIST = ["original", "face_swap", "face_reenact"]
-IO_PATH = "./io"
-IMG_SIZE = (256, 256, 3)
-SEQ_LEN = 12
-BATCH_SIZE = 4
-EPOCHS = 6
-EPOCHS_BASELINE = 1
-EPOCHS_PATIENCE = 3
+CLASS_LIST            = ["original", "face_swap", "face_reenact"]
+IO_PATH               = "./io"
+IMG_SIZE              = (256, 256, 3)
+SEQ_LEN               = 12
+BATCH_SIZE            = 4
+EPOCHS                = 6
+EPOCHS_BASELINE       = 1
+EPOCHS_PATIENCE       = 3
+LEARNING_RATE_MIN     = 1e-6
 LEARNING_RATE_DEFAULT = 1e-3
-LEARNING_RATE_MIN = 1e-6
+WEIGHT_DECAY          = 3e-3
+DROPOUT               = 3e-1
 
-print(tf.config.list_physical_devices('GPU'))
+print("############################## MODEL ##############################")
+
+# Adam-Optimizer (opt. Weight Decay)
+#model_optimizer = tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE_MIN)
+model_optimizer = tf.keras.optimizers.AdamW(learning_rate=LEARNING_RATE_MIN, weight_decay=WEIGHT_DECAY)
+
+def create_feature_extractor(feature_extractor_str: str):
+    feature_extractor = None
+    if feature_extractor_str == "resnet":
+        feature_extractor = tf.keras.applications.ResNet50(weights="imagenet", input_shape=IMG_SIZE, pooling="avg", include_top=False)
+    elif feature_extractor_str == "efficientnet":
+        feature_extractor = tf.keras.applications.EfficientNetB3(weights="imagenet", input_shape=IMG_SIZE, pooling="avg", include_top=False)
+    else:
+        return None
+    return feature_extractor
+
+def create_model():
+    model = tf.keras.Sequential([
+        ly.Input(shape=(SEQ_LEN, *IMG_SIZE)),
+        ly.TimeDistributed(
+            create_feature_extractor("resnet"), name="baseline"
+        ), ly.Bidirectional(
+            ly.LSTM(256), name="bilstm"
+        ),
+        ly.Dropout(DROPOUT),
+        ly.Dense(len(CLASS_LIST), activation="softmax") # kernel_regularizer=tf.keras.regularizers.l2(WEIGHT_DECAY) [use weight decay in Adam optimizer instead?!]
+    ])
+    model.compile(optimizer=model_optimizer, loss="categorical_crossentropy", metrics=["auc", "categorical_accuracy", "f1_score"])
+    return model
+
+model = create_model()
+
+# Model Checkpoint
+model_checkpoint = tf.keras.callbacks.ModelCheckpoint(filepath=IO_PATH + "/model.weights.h5", save_weights_only=True, verbose=1)
+
+# LR-Scheduler (ReduceLROnPlateau)
+lr_scheduler = tf.keras.callbacks.ReduceLROnPlateau(monitor="val_loss", factor=0.5, patience=EPOCHS_PATIENCE, min_lr=LEARNING_RATE_MIN)
+
+# Early-Stopping (Training, bis Modell sich nicht weiter verbessert)
+early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=EPOCHS_PATIENCE, restore_best_weights=True)
+
+# Custom Callback to freeze baseline weights and update learning rate during training
+class FreezeBaselineCallback(tf.keras.callbacks.Callback):
+    def on_epoch_begin(self, epoch, logs=None):
+        if epoch == EPOCHS_BASELINE:
+            model.get_layer("baseline").trainable = False
+            model_optimizer.learning_rate.assign(LEARNING_RATE_DEFAULT)
+            print("Baseline Model freezed, updated learning rate.")
+
+model.summary()
 
 print("############################## DATASET ##############################")
 
@@ -69,11 +120,11 @@ test_dataset_classes = collections.Counter([int(l.numpy()) for (_, l) in test_da
 
 print("Train Dataset:")
 for i, c in enumerate(CLASS_LIST):
-    print(f" {c}: {train_dataset_classes[i]}x")
+    print(f"  {c}: {train_dataset_classes[i]}x")
 
 print("Test Dataset:")
 for i, c in enumerate(CLASS_LIST):
-    print(f" {c}: {test_dataset_classes[i]}x")
+    print(f"  {c}: {test_dataset_classes[i]}x")
 
 print("Prefetching items...")
 train_dataset = train_dataset.map(df40_load_and_preprocess, num_parallel_calls=tf.data.AUTOTUNE).shuffle(int(float(train_dataset.cardinality()) * 0.025), reshuffle_each_iteration=True).batch(BATCH_SIZE)
@@ -81,60 +132,11 @@ test_dataset = test_dataset.map(df40_load_and_preprocess, num_parallel_calls=tf.
 train_dataset = train_dataset.prefetch(tf.data.AUTOTUNE)
 test_dataset = test_dataset.prefetch(tf.data.AUTOTUNE)
 
-print("############################## MODEL ##############################")
-
-model_optimizer = tf.keras.optimizers.Adam(learning_rate = LEARNING_RATE_MIN)
-
-def create_baseline_model(feature_extractor_str: str):
-    feature_extractor = None
-    if feature_extractor_str == "resnet":
-        feature_extractor = tf.keras.applications.ResNet50(weights="imagenet", input_shape=IMG_SIZE, pooling="avg", include_top=False)
-    elif feature_extractor_str == "efficientnet":
-        feature_extractor = tf.keras.applications.EfficientNetB3(weights="imagenet", input_shape=IMG_SIZE, pooling="avg", include_top=False)
-    else:
-        return None
-    return feature_extractor
-
-def create_model():
-    model = tf.keras.Sequential([
-        ly.Input(shape=(SEQ_LEN, *IMG_SIZE)),
-        ly.TimeDistributed(
-            create_baseline_model("resnet"), name="baseline"
-        ), ly.Bidirectional(
-            ly.LSTM(256), name="bilstm"
-        ),
-        ly.Dropout(0.3), # Dropout Layer
-        ly.Dense(len(CLASS_LIST), activation="softmax", kernel_regularizer=tf.keras.regularizers.l2(0.003)) # L2-Regularisierung
-    ])
-    model.compile(optimizer=model_optimizer, loss="categorical_crossentropy", metrics=["auc", "categorical_accuracy", "f1_score"])
-    return model
-
-model = create_model()
-model.summary()
-
-# Model Checkpoint
-model_checkpoint = tf.keras.callbacks.ModelCheckpoint(
-    filepath=IO_PATH + "/model.weights.h5",
-    save_weights_only=True,
-    verbose=1
-)
-
-# LR-Scheduler (ReduceLROnPlateau)
-lr_scheduler = tf.keras.callbacks.ReduceLROnPlateau(monitor = "val_loss", factor = 0.5, patience = EPOCHS_PATIENCE, min_lr = LEARNING_RATE_MIN)
-
-# Early-Stopping (Training, bis Modell sich nicht weiter verbessert)
-early_stopping = tf.keras.callbacks.EarlyStopping(monitor = "val_loss", patience = EPOCHS_PATIENCE, restore_best_weights = True)
-
-class FreezeBaselineCallback(tf.keras.callbacks.Callback):
-    def on_epoch_begin(self, epoch, logs = None):
-        if epoch == EPOCHS_BASELINE:
-            model.get_layer("baseline").trainable = False
-            model_optimizer.learning_rate.assign(LEARNING_RATE_DEFAULT)
-            print("Baseline Model freezed, updated learning rate.")
-
 print("############################## TRAINING ##############################")
 
-history = model.fit(train_dataset, epochs = EPOCHS, validation_data = test_dataset, validation_freq = EPOCHS_PATIENCE, callbacks = [model_checkpoint, lr_scheduler, early_stopping, FreezeBaselineCallback()])
+print(tf.config.list_physical_devices("GPU"))
+
+history = model.fit(train_dataset, epochs=EPOCHS, validation_data=test_dataset, validation_freq=EPOCHS_PATIENCE, callbacks=[model_checkpoint, lr_scheduler, early_stopping, FreezeBaselineCallback()])
 
 print("############################## STORING/CONVERT ##############################")
 
