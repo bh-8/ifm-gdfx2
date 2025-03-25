@@ -19,7 +19,16 @@ WEIGHT_DECAY      = 3e-3
 DROPOUT           = 3e-1
 FEATURE_EXTRACTOR = "resnet"
 
+# TODO: test optimieren (shuffle raus etc.)
+
 print("############################## MODEL ##############################")
+
+print(tf.config.list_physical_devices("GPU"))
+strategy = tf.distribute.MirroredStrategy()
+print(f"devices: {strategy.num_replicas_in_sync}")
+
+import sys
+sys.exit(0)
 
 # Adam-Optimizer (inkl. opt. Weight Decay/adapt. LR)
 #model_optimizer = tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE)
@@ -112,9 +121,13 @@ train_sequences, train_labels = df40_list_labeled_items(pl.Path(IO_PATH + "/df40
 test_sequences, test_labels = df40_list_labeled_items(pl.Path(IO_PATH + "/df40/test").resolve())
 
 train_data = list(zip(train_sequences, train_labels))
+test_data = list(zip(test_sequences, test_labels))
 random.shuffle(train_data)
+random.shuffle(test_data)
 train_sequences, train_labels = zip(*train_data)
+test_sequences, test_labels = zip(*test_data)
 train_sequences, train_labels = list(train_sequences), list(train_labels)
+test_sequences, test_labels = list(test_sequences), list(test_labels)
 
 print("Preprocessing items...")
 train_dataset = tf.data.Dataset.from_tensor_slices((train_sequences, train_labels))
@@ -137,13 +150,11 @@ for i, c in enumerate(CLASS_LIST):
 
 print("Prefetching items...")
 train_dataset = train_dataset.map(df40_load_and_preprocess, num_parallel_calls=tf.data.AUTOTUNE).shuffle(int(float(train_dataset.cardinality()) * 0.025), reshuffle_each_iteration=True).batch(BATCH_SIZE)
-test_dataset = test_dataset.map(df40_load_and_preprocess, num_parallel_calls=tf.data.AUTOTUNE).shuffle(int(float(test_dataset.cardinality()) * 0.025), reshuffle_each_iteration=True).batch(BATCH_SIZE)
+test_dataset = test_dataset.map(df40_load_and_preprocess, num_parallel_calls=tf.data.AUTOTUNE).batch(BATCH_SIZE)
 train_dataset = train_dataset.prefetch(tf.data.AUTOTUNE)
 test_dataset = test_dataset.prefetch(tf.data.AUTOTUNE)
 
 print("############################## TRAINING ##############################")
-
-print(tf.config.list_physical_devices("GPU"))
 
 history = model.fit(train_dataset, epochs=EPOCHS, class_weight=class_weights, validation_data=test_dataset, validation_freq=EPOCHS_PATIENCE, validation_steps=(len(test_dataset)/(2 * BATCH_SIZE)), callbacks=[model_checkpoint, early_stopping, FreezeBaselineCallback()])
 
