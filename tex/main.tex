@@ -90,6 +90,8 @@
         \item zusätzlicher Validierungsdatensatz % https://huggingface.co/datasets/faridlab/deepspeak_v1
         \item Weitere Klassen einfügen (über FS und FR hinaus)
         \item Weitere Optimierungsmöglichkeiten
+        \item ViT
+        \item Vorverarbeitungsmethoden (Frames aus Video extrahieren und FaceCropping)
     \end{itemize}
 
     \bibliographystyle{plain}
@@ -101,8 +103,11 @@
         \item umgesetzt:
         \item Normalisierung gefixed (Resnet/EfficientNet)
         \item LR-Scheduler raus (bereits durch Adam abgedeckt), manuelle Anpassung der Lernrate/weight freezing
+        \item class weights eingebaut: nachteile von over/undersampling
+        \item Generell bericht: Was hat gut funktioniert, was nicht?
     \end{itemize}
     \begin{itemize}
         \item Weitere Frage: Regularisierung sinnvoll? Bias/Kernel
+        \item Resnet und EfficientNet haben nutzen ein Klassenattribut = 1000 klassen. Sollte man das ändern?
     \end{itemize}
 \end{document}

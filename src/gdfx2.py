@@ -21,7 +21,7 @@ FEATURE_EXTRACTOR     = "resnet"
 
 print("############################## MODEL ##############################")
 
-# Adam-Optimizer (opt. Weight Decay)
+# Adam-Optimizer (inkl. opt. Weight Decay/adapt. LR)
 #model_optimizer = tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE)
 model_optimizer = tf.keras.optimizers.AdamW(learning_rate=LEARNING_RATE, weight_decay=WEIGHT_DECAY)
 
@@ -100,7 +100,7 @@ def df40_load_and_preprocess(path_sequence: list[str], label: int):
     def _load_image(image_path: str):
         image = tf.io.read_file(image_path)
         image = tf.image.decode_png(image, channels=3)
-        #image = tf.image.resize(image, [256, 256])
+        image = tf.image.resize(image, [256, 256])
         #image = image / 255.0
         return image
     return tf.stack([tf.keras.applications.resnet.preprocess_input(_load_image(image_path)) for elem in tf.unstack(path_sequence)] if FEATURE_EXTRACTOR == "resnet" else [_load_image(elem) for elem in tf.unstack(path_sequence)]), tf.one_hot(label, len(CLASS_LIST))
@@ -123,10 +123,11 @@ test_dataset_classes = collections.Counter([int(l.numpy()) for (_, l) in test_da
 print("Train Dataset:")
 for i, c in enumerate(CLASS_LIST):
     print(f"  {c}: {train_dataset_classes[i]}x")
-print({i: len(train_dataset) / (c * len(train_dataset_classes)) for i, c in train_dataset_classes.items()})
 
-import sys
-sys.exit(0)
+class_weights = {i: len(train_dataset) / (c * len(train_dataset_classes)) for i, c in train_dataset_classes.items()}
+print("Class Weights:")
+for i, c in enumerate(CLASS_LIST):
+    print(f"  {c}: {class_weights[i]}")
 
 print("Test Dataset:")
 for i, c in enumerate(CLASS_LIST):
@@ -142,7 +143,7 @@ print("############################## TRAINING ##############################")
 
 print(tf.config.list_physical_devices("GPU"))
 
-history = model.fit(train_dataset, epochs=EPOCHS, validation_data=test_dataset, validation_freq=EPOCHS_PATIENCE, callbacks=[model_checkpoint, lr_scheduler, early_stopping, FreezeBaselineCallback()])
+history = model.fit(train_dataset, epochs=EPOCHS, class_weight=class_weights, validation_data=test_dataset, validation_freq=EPOCHS_PATIENCE, callbacks=[model_checkpoint, lr_scheduler, early_stopping, FreezeBaselineCallback()])
 
 print("############################## STORING ##############################")
 
