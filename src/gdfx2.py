@@ -123,8 +123,7 @@ test_dataset_classes = collections.Counter([int(l.numpy()) for (_, l) in test_da
 print("Train Dataset:")
 for i, c in enumerate(CLASS_LIST):
     print(f"  {c}: {train_dataset_classes[i]}x")
-print(f"  total: {len(train_dataset)}")
-#class_weight_dict = {i: total_instances / (count * len(label_counts)) for i, count in label_counts.items()}
+print({i: len(train_dataset) / (c * len(train_dataset_classes)) for i, c in train_dataset_classes.items()})
 
 import sys
 sys.exit(0)
