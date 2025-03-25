@@ -20,8 +20,10 @@ LEARNING_RATE_DEFAULT = 1e-3
 WEIGHT_DECAY          = 3e-3
 DROPOUT               = 3e-1
 
+print("############################## CONVERSION ##############################")
+
 print(f"Converting quantized model...")
-model_converter = tf.lite.TFLiteConverter.from_saved_model(IO_PATH + "/model_final")
+model_converter = tf.lite.TFLiteConverter.from_keras_model(IO_PATH + "/model_final")
 model_converter.optimizations = [tf.lite.Optimize.DEFAULT]
 model_quantized = model_converter.convert()
 model_quantized.summary()
@@ -148,7 +150,7 @@ print(tf.config.list_physical_devices("GPU"))
 
 history = model.fit(train_dataset, epochs=EPOCHS, validation_data=test_dataset, validation_freq=EPOCHS_PATIENCE, callbacks=[model_checkpoint, lr_scheduler, early_stopping, FreezeBaselineCallback()])
 
-print("############################## STORING/CONVERT ##############################")
+print("############################## STORING ##############################")
 
 print(f"Saving latest model state to '{IO_PATH + '/model_final.keras'}'")
 model.save(IO_PATH + "/model_final.keras")
