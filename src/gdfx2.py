@@ -69,7 +69,7 @@ class FreezeBaselineCallback(tf.keras.callbacks.Callback):
         if epoch in freezing_layers:
             for layer in fe_layer.layers[-freezing_layers[epoch]:]:
                 layer.trainable = True
-            new_lr = LEARNING_RATE / (2 ** epoch)
+            new_lr = (LEARNING_RATE / 10) / (2 ** epoch)
             model_optimizer.learning_rate.assign(new_lr)
             print(f"Epoch {epoch + 1}: Unfreezed {freezing_layers[epoch]} layers of baseline model, set learning rate to {new_lr}.")
         else:
