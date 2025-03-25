@@ -74,7 +74,6 @@ class_weights = {i: len(train_dataset) / (c * len(train_dataset_classes)) for i,
 print("Class Weights:")
 for i, c in enumerate(CLASS_LIST):
     print(f"  {c}: {class_weights[i]}")
-print(class_weights)
 
 print("Test Dataset:")
 for i, c in enumerate(CLASS_LIST):
@@ -88,10 +87,11 @@ test_dataset = test_dataset.prefetch(tf.data.AUTOTUNE)
 
 print("############################## MODEL ##############################")
 
-#strategy = tf.distribute.MirroredStrategy()
-
 print(tf.config.list_physical_devices("GPU"))
-#print(f"available devices: {strategy.num_replicas_in_sync}")
+
+# Adam-Optimizer (inkl. opt. Weight Decay/adapt. LR)
+#model_optimizer = tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE)
+model_optimizer = tf.keras.optimizers.AdamW(learning_rate=LEARNING_RATE, weight_decay=WEIGHT_DECAY)
 
 def create_feature_extractor():
     feature_extractor = None
@@ -118,11 +118,6 @@ def create_model():
     model.compile(optimizer=model_optimizer, loss="categorical_crossentropy", metrics=["auc", "categorical_accuracy", "f1_score"])
     return model
 
-#with strategy.scope():
-# Adam-Optimizer (inkl. opt. Weight Decay/adapt. LR)
-#model_optimizer = tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE)
-model_optimizer = tf.keras.optimizers.AdamW(learning_rate=LEARNING_RATE, weight_decay=WEIGHT_DECAY)
-
 model = create_model()
 
 # Model Checkpoint
@@ -134,22 +129,18 @@ early_stopping = tf.keras.callbacks.EarlyStopping(monitor="f1_score", patience=E
 # Custom Callback to freeze baseline weights and update learning rate during training
 class FreezeBaselineCallback(tf.keras.callbacks.Callback):
     def on_epoch_begin(self, epoch, logs=None):
-        print("Mark A")
         model.get_layer("baseline").trainable = False
 
         freezing_layers: dict = {0: 32, 1: 16, 2: 8}
         fe_layer = model.get_layer("baseline").layer
 
-        print("Mark B")
         if epoch in freezing_layers:
-            print("Mark C")
             for layer in fe_layer.layers[-freezing_layers[epoch]:]:
                 layer.trainable = True
             new_lr = (LEARNING_RATE / 10) / (2 ** epoch)
             model_optimizer.learning_rate.assign(new_lr)
             print(f"Epoch {epoch + 1}: Unfreezed {freezing_layers[epoch]} layers of baseline model, set learning rate to {new_lr}.")
         else:
-            print("Mark D")
             new_lr = LEARNING_RATE / (2 ** (epoch - len(freezing_layers.keys())))
             model_optimizer.learning_rate.assign(new_lr)
             print(f"Epoch {epoch + 1}: Freezed all layers of baseline model, set learning rate to {new_lr}.")
@@ -158,7 +149,7 @@ model.summary()
 
 print("############################## TRAINING ##############################")
 
-history = model.fit(train_dataset, epochs=EPOCHS, class_weight=class_weights, validation_data=test_dataset, validation_freq=EPOCHS_PATIENCE, callbacks=[model_checkpoint, early_stopping, FreezeBaselineCallback()])
+history = model.fit(train_dataset, epochs=EPOCHS, class_weight=class_weights, validation_data=test_dataset, validation_freq=EPOCHS_PATIENCE, validation_steps=int(len(test_dataset) / (2 * BATCH_SIZE)), callbacks=[model_checkpoint, FreezeBaselineCallback()])
 
 print("############################## STORING ##############################")
 
