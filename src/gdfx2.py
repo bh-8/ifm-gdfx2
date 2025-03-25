@@ -75,7 +75,7 @@ class FreezeBaselineCallback(tf.keras.callbacks.Callback):
         else:
             model_optimizer.learning_rate.assign(LEARNING_RATE)
             print(f"Epoch {epoch + 1}: Freezed all layers of baseline model, set learning rate to {LEARNING_RATE}.")
-        print(f"  trainable variables: {model.trainable_variables}")
+        #print(f"  trainable variables: {model.trainable_variables}")
 
 model.summary()
 
