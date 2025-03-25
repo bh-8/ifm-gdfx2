@@ -7,17 +7,17 @@ import tensorflow as tf
 import tensorflow.keras.layers as ly
 import tensorflow_datasets as tfds
 
-CLASS_LIST            = ["original", "face_swap", "face_reenact"]
-IO_PATH               = "./io"
-IMG_SIZE              = (256, 256, 3)
-SEQ_LEN               = 12
-BATCH_SIZE            = 4
-EPOCHS                = 6
-EPOCHS_PATIENCE       = 3
-LEARNING_RATE         = 1e-3
-WEIGHT_DECAY          = 3e-3
-DROPOUT               = 3e-1
-FEATURE_EXTRACTOR     = "resnet"
+CLASS_LIST        = ["original", "face_swap", "face_reenact"]
+IO_PATH           = "./io"
+IMG_SIZE          = (256, 256, 3)
+SEQ_LEN           = 12
+BATCH_SIZE        = 4
+EPOCHS            = 9
+EPOCHS_PATIENCE   = 3
+LEARNING_RATE     = 1e-3
+WEIGHT_DECAY      = 3e-3
+DROPOUT           = 3e-1
+FEATURE_EXTRACTOR = "resnet"
 
 print("############################## MODEL ##############################")
 
@@ -56,14 +56,14 @@ model = create_model()
 model_checkpoint = tf.keras.callbacks.ModelCheckpoint(filepath=IO_PATH + "/model.weights.h5", save_weights_only=True, verbose=1)
 
 # Early-Stopping (Training, bis Modell sich nicht weiter verbessert)
-early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=EPOCHS_PATIENCE, restore_best_weights=True)
+early_stopping = tf.keras.callbacks.EarlyStopping(monitor="f1_score", patience=EPOCHS_PATIENCE, restore_best_weights=True)
 
 # Custom Callback to freeze baseline weights and update learning rate during training
 class FreezeBaselineCallback(tf.keras.callbacks.Callback):
     def on_epoch_begin(self, epoch, logs=None):
         model.get_layer("baseline").trainable = False
 
-        freezing_layers: dict = {0: 30, 1: 20, 2: 10}
+        freezing_layers: dict = {0: 32, 1: 16, 2: 8}
         fe_layer = model.get_layer("baseline").layer
 
         if epoch in freezing_layers:
@@ -73,9 +73,9 @@ class FreezeBaselineCallback(tf.keras.callbacks.Callback):
             model_optimizer.learning_rate.assign(new_lr)
             print(f"Epoch {epoch + 1}: Unfreezed {freezing_layers[epoch]} layers of baseline model, set learning rate to {new_lr}.")
         else:
-            model_optimizer.learning_rate.assign(LEARNING_RATE)
-            print(f"Epoch {epoch + 1}: Freezed all layers of baseline model, set learning rate to {LEARNING_RATE}.")
-        #print(f"  trainable variables: {model.trainable_variables}")
+            new_lr = LEARNING_RATE / (2 ** (epoch - len(freezing_layers.keys())))
+            model_optimizer.learning_rate.assign(new_lr)
+            print(f"Epoch {epoch + 1}: Freezed all layers of baseline model, set learning rate to {new_lr}.")
 
 model.summary()
 
