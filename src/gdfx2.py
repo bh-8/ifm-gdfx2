@@ -143,7 +143,7 @@ print("############################## TRAINING ##############################")
 
 print(tf.config.list_physical_devices("GPU"))
 
-history = model.fit(train_dataset, epochs=EPOCHS, class_weight=class_weights, validation_data=test_dataset, validation_freq=EPOCHS_PATIENCE, callbacks=[model_checkpoint, lr_scheduler, early_stopping, FreezeBaselineCallback()])
+history = model.fit(train_dataset, epochs=EPOCHS, class_weight=class_weights, validation_data=test_dataset, validation_freq=EPOCHS_PATIENCE, callbacks=[model_checkpoint, early_stopping, FreezeBaselineCallback()])
 
 print("############################## STORING ##############################")
 
