@@ -60,30 +60,30 @@ def create_model():
 with strategy.scope():
     model = create_model()
 
-# Model Checkpoint
-model_checkpoint = tf.keras.callbacks.ModelCheckpoint(filepath=IO_PATH + "/model.weights.h5", save_weights_only=True, verbose=1)
+    # Model Checkpoint
+    model_checkpoint = tf.keras.callbacks.ModelCheckpoint(filepath=IO_PATH + "/model.weights.h5", save_weights_only=True, verbose=1)
 
-# Early-Stopping (Training, bis Modell sich nicht weiter verbessert)
-early_stopping = tf.keras.callbacks.EarlyStopping(monitor="f1_score", patience=EPOCHS_PATIENCE, restore_best_weights=True)
+    # Early-Stopping (Training, bis Modell sich nicht weiter verbessert)
+    early_stopping = tf.keras.callbacks.EarlyStopping(monitor="f1_score", patience=EPOCHS_PATIENCE, restore_best_weights=True)
 
-# Custom Callback to freeze baseline weights and update learning rate during training
-class FreezeBaselineCallback(tf.keras.callbacks.Callback):
-    def on_epoch_begin(self, epoch, logs=None):
-        model.get_layer("baseline").trainable = False
+    # Custom Callback to freeze baseline weights and update learning rate during training
+    class FreezeBaselineCallback(tf.keras.callbacks.Callback):
+        def on_epoch_begin(self, epoch, logs=None):
+            model.get_layer("baseline").trainable = False
 
-        freezing_layers: dict = {0: 32, 1: 16, 2: 8}
-        fe_layer = model.get_layer("baseline").layer
+            freezing_layers: dict = {0: 32, 1: 16, 2: 8}
+            fe_layer = model.get_layer("baseline").layer
 
-        if epoch in freezing_layers:
-            for layer in fe_layer.layers[-freezing_layers[epoch]:]:
-                layer.trainable = True
-            new_lr = (LEARNING_RATE / 10) / (2 ** epoch)
-            model_optimizer.learning_rate.assign(new_lr)
-            print(f"Epoch {epoch + 1}: Unfreezed {freezing_layers[epoch]} layers of baseline model, set learning rate to {new_lr}.")
-        else:
-            new_lr = LEARNING_RATE / (2 ** (epoch - len(freezing_layers.keys())))
-            model_optimizer.learning_rate.assign(new_lr)
-            print(f"Epoch {epoch + 1}: Freezed all layers of baseline model, set learning rate to {new_lr}.")
+            if epoch in freezing_layers:
+                for layer in fe_layer.layers[-freezing_layers[epoch]:]:
+                    layer.trainable = True
+                new_lr = (LEARNING_RATE / 10) / (2 ** epoch)
+                model_optimizer.learning_rate.assign(new_lr)
+                print(f"Epoch {epoch + 1}: Unfreezed {freezing_layers[epoch]} layers of baseline model, set learning rate to {new_lr}.")
+            else:
+                new_lr = LEARNING_RATE / (2 ** (epoch - len(freezing_layers.keys())))
+                model_optimizer.learning_rate.assign(new_lr)
+                print(f"Epoch {epoch + 1}: Freezed all layers of baseline model, set learning rate to {new_lr}.")
 
 model.summary()
 
