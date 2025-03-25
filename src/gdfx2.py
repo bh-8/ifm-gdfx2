@@ -74,6 +74,7 @@ class_weights = {i: len(train_dataset) / (c * len(train_dataset_classes)) for i,
 print("Class Weights:")
 for i, c in enumerate(CLASS_LIST):
     print(f"  {c}: {class_weights[i]}")
+print(class_weights)
 
 print("Test Dataset:")
 for i, c in enumerate(CLASS_LIST):
@@ -155,7 +156,8 @@ print("############################## TRAINING ##############################")
 
 print(f"validation_steps = int(len(test_dataset)/(2 * BATCH_SIZE)) = {int(len(test_dataset)/(2 * BATCH_SIZE))}")
 
-history = model.fit(train_dataset, epochs=EPOCHS, class_weight=class_weights, validation_data=test_dataset, validation_freq=EPOCHS_PATIENCE, callbacks=[model_checkpoint, early_stopping, FreezeBaselineCallback()])
+# , class_weight=class_weights
+history = model.fit(train_dataset, epochs=EPOCHS, validation_data=test_dataset, validation_freq=EPOCHS_PATIENCE, callbacks=[model_checkpoint, early_stopping, FreezeBaselineCallback()])
 
 print("############################## STORING ##############################")
 
