@@ -9,7 +9,7 @@ import tensorflow_datasets as tfds
 
 CLASS_LIST        = ["original", "face_swap", "face_reenact"]
 IO_PATH           = "./io"
-IMG_SIZE          = (256, 256, 3)
+IMG_SIZE          = (224, 224, 3)
 SEQ_LEN           = 12
 BATCH_SIZE        = 8
 EPOCHS            = 9
@@ -17,7 +17,11 @@ EPOCHS_PATIENCE   = 3
 LEARNING_RATE     = 1e-3
 WEIGHT_DECAY      = 3e-3
 DROPOUT           = 3e-1
-FEATURE_EXTRACTOR = "efficientnet" # "resnet"
+FEATURE_EXTRACTOR = "resnet" # efficientnet/resnet
+
+print(IMG_SIZE[:2])
+import sys
+sys.exit(0)
 
 print("############################## DATASET ##############################")
 
@@ -42,7 +46,7 @@ def df40_load_and_preprocess(path_sequence: list[str], label: int):
     def _load_image(image_path: str):
         image = tf.io.read_file(image_path)
         image = tf.image.decode_png(image, channels=3)
-        image = tf.image.resize(image, [224, 224])
+        image = tf.image.resize(image, IMG_SIZE[:2])
         #image = image / 255.0
         return image
     return tf.stack([tf.keras.applications.resnet.preprocess_input(_load_image(elem)) for elem in tf.unstack(path_sequence)] if FEATURE_EXTRACTOR == "resnet" else [_load_image(elem) for elem in tf.unstack(path_sequence)]), tf.one_hot(label, len(CLASS_LIST))
