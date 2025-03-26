@@ -129,19 +129,16 @@ early_stopping = tf.keras.callbacks.EarlyStopping(monitor="loss", patience=EPOCH
 class FreezeBaselineCallback(tf.keras.callbacks.Callback):
     def on_epoch_begin(self, epoch, logs=None):
         model.get_layer("baseline").trainable = False
-
-        freezing_layers: dict = {0: 32, 1: 16, 2: 8}
         fe_layer = model.get_layer("baseline").layer
 
-        if epoch in freezing_layers:
-            for layer in fe_layer.layers[-freezing_layers[epoch]:]:
+        if epoch < EPOCHS_PATIENCE:
+            unfreeze_layers: int = int(len(fe_layer.layers) / (2 ** epoch))
+            for layer in fe_layer.layers[-unfreeze_layers:]:
                 layer.trainable = True
-            #new_lr = (LEARNING_RATE / 10) / (2 ** epoch)
-            new_lr = LEARNING_RATE / (2 ** epoch)
+            new_lr = (LEARNING_RATE / 10) / (2 ** epoch)
             model_optimizer.learning_rate.assign(new_lr)
-            print(f"Epoch {epoch + 1}: unfreezed {freezing_layers[epoch]} layers of baseline model, set learning rate to {new_lr}")
+            print(f"Epoch {epoch + 1}: unfreezed {unfreeze_layers} layers of baseline model, set learning rate to {new_lr}")
         else:
-            #new_lr = LEARNING_RATE / (2 ** (epoch - len(freezing_layers.keys())))
             new_lr = LEARNING_RATE / (2 ** epoch)
             model_optimizer.learning_rate.assign(new_lr)
             print(f"Epoch {epoch + 1}: freezed all layers of baseline model, set learning rate to {new_lr}")

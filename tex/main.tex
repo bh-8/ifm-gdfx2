@@ -104,8 +104,8 @@ df40/
     \subsection{Aufbau des Modells}
     Das in dieser Arbeit entwickelte Modell besteht aus den folgenden Schichten:
     \begin{enumerate}
-        \item\textbf{Input-Layer}: In der Eingabeschicht wird die Form des Eingabetensors definiert. Diese ergibt sich zum einen aus den Abmessungen eines einzelnen Frames (\texttt{224x224x3}), zum anderen aus der Länge der Sequenz (\texttt{8}, \texttt{12} oder \texttt{16}), mit der das Modell arbeiten soll.
-        \item\textbf{FeatureExtraction-Layer}: Diese Schicht implementiert eine Merkmalsextraktion für jeden Frame in der Sequenz (\enquote{\texttt{TimeDistributed}}), wahlweise durch ResNet50 oder EfficientNetB0. Die Gewichte dieser Schicht werden initial mit vortrainierten Gewichten via \enquote{\texttt{imagenet}}~\footnote{ImageNet, \url{https://www.image-net.org/}} belegt.
+        \item\textbf{Input-Layer}: In der Eingabeschicht wird die Form des Eingabetensors definiert. Diese ergibt sich zum einen aus den Abmessungen eines einzelnen Frames (\texttt{224x224x3}), zum anderen aus der Länge der Sequenz (\texttt{8}, \texttt{12} oder \texttt{16}), mit der das Modell arbeiten soll. Beispielweise wäre ein Tensor der Form \texttt{(12, 224, 224, 3)} eine valide Eingabe für ein Modell mit Sequenzlänge \texttt{12}.
+        \item\textbf{FeatureExtraction-Layer}: Diese Schicht implementiert eine Merkmalsextraktion für jeden Frame (\texttt{224x224x3}) in der Sequenz (\enquote{TimeDistributed-Layer}), wahlweise durch ResNet50 oder EfficientNetB0. Die Gewichte dieser Schicht werden initial mit vortrainierten Gewichten via \enquote{\texttt{imagenet}}~\footnote{ImageNet, \url{https://www.image-net.org/}} belegt.
     \end{enumerate}
     \begin{itemize}
         \item GlovalAvgPooling-Layer
@@ -146,6 +146,7 @@ df40/
     \subsection{Fazit}
     \subsection{Ausblick für zukünftige Arbeiten}
     \begin{itemize}
+        \item DataAugmentation
         \item zusätzlicher Validierungsdatensatz % https://huggingface.co/datasets/faridlab/deepspeak_v1
         \item Weitere Klassen einfügen (über FS und FR hinaus)
         \item Weitere Optimierungsmöglichkeiten
