@@ -132,7 +132,7 @@ class FreezeBaselineCallback(tf.keras.callbacks.Callback):
         fe_layer = model.get_layer("baseline").layer
 
         if epoch < EPOCHS_PATIENCE:
-            unfreeze_layers: int = int(len(fe_layer.layers) / float(2 ** epoch))
+            unfreeze_layers: int = int(len(fe_layer.layers) / float(2 ** (epoch + 1)))
             for layer in fe_layer.layers[-unfreeze_layers:]:
                 layer.trainable = True
             new_lr = (LEARNING_RATE / 10) / (2 ** epoch)
