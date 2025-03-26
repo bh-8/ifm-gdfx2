@@ -4,6 +4,7 @@
 \usepackage{csquotes}
 \usepackage{geometry}
 \usepackage{hyperref}
+\usepackage{listings}
 \usepackage{scrextend}
 \usepackage{xurl}
 \deffootnote{0em}{1.6em}{\thefootnotemark.\enskip}
@@ -21,6 +22,10 @@
     Dazu wird zunächst ein Baseline-Modell trainiert, welches im weiteren Verlauf der Untersuchung mit verschiedenen Komponenten angepasst werden kann.
     Abschließend sollen die Auswirkungen auf die Modell-Performance anhand geeigneter Metriken evaluiert werden.
     Zur Implementierung der Deepfake-Klassifikation werden Deeplearning-Methoden~\cite{deeplearningbook} eingesetzt.
+    \subsection{Architekturen für sequentielle Daten}
+    \begin{itemize}
+        \item RNNs - LSTMs - BiLSTMs % https://medium.com/@anishnama20/understanding-bidirectional-lstm-for-sequential-data-processing-b83d6283befc
+    \end{itemize}
     \subsection{Merkmalsextraktoren als Baseline-Modelle}
     \subsubsection{ResNet50}
     ResNet50 ist eine CNN-Architektur (\enquote{Convolutional Neural Networks}) für tiefe neuronale Netzwerke, die zu den \enquote{Residual Networks}~\cite{resnet} gehört und eine Tiefe von 50 Schichten aufweist.
@@ -31,25 +36,44 @@
     Der Hauptunterschied zu ResNet besteht in der Skalierung: bei EfficientNet können nicht nur weitere Schichten hinzugefügt, sondern das Netz kann in Tiefe, Breite und Auflösung angepasst werden (\enquote{Compound Model Scaling})~\footnote{Understanding EfficientNet - The most powerful CNN architecture, \url{https://arjun-sarkar786.medium.com/understanding-efficientnet-the-most-powerful-cnn-architecture-eaeb40386fad}}.
     Desweiteren nutzt EfficientNet sogenannte \enquote{MBConv-Blöcke}, eine effizientere Strategie zur Implementierung von \enquote{Inverted Residual Blocks}.
     Dadurch verringert sich die Parameteranzahl im Vergleich zu ResNet erheblich, was zu einem deutlich reduzierten Rechenaufwand bei ählicher Genauigkeit führt.
-    \subsection{BiLSTMs}
-    \begin{itemize}
-        \item RNNs
-        \item LSTMs
-        \item BiLSTMs % https://medium.com/@anishnama20/understanding-bidirectional-lstm-for-sequential-data-processing-b83d6283befc
-    \end{itemize}
     \subsection{DF40-Datenset}
     Um einen Klassifikator zu trainieren, der neben der Detektion zusätzlich verschiedene Arten von Deepfakes erkennen soll, ist ein breit gestreuter Trainings- bzw. Validierungsdatensatz notwendig.
     Dafür wurde das DF40-Datenset~\cite{yan2024df40} ausgewählt, eine Sammlung von Deepfake-Erzeugnissen von 40 verschiedenen Tools inklusive der Originaldaten.
     Im Rahmen dieser Arbeit soll in einem ersten Proof-of-Concept zunächst zwischen den Klassen \enquote{original}, \enquote{faceswap} (10 Tools) und \enquote{facereenactment} (13 Tools) unterschieden werden.
+    \begin{lstlisting}[language=Python,caption={Ordnerstruktur des DF40-Datensets im \enquote{io}-Verzeichnis}]
+df40/
+    test/
+        original/
+            ffpp/frames/
+                <item>/*.png
+        face_swap/
+            <tool>/frames/
+                <item>/*.png
+        face_reenact/
+            <tool>/frames/
+                <item>/*.png
+    train/
+        original/
+            ffpp/frames/
+                <item>/*.png
+        face_swap/
+            <tool>/frames/
+                <item>/*.png
+        face_reenact/
+            <tool>/frames/
+                <item>/*.png
+    \end{lstlisting}
+    Da das DF40-Datenset bereits als vorverarbeitete Version angeboten wird, müssen keine erweiterten vorbereitenden Schritte wie FaceDetection/Cropping ausgeführt werden.
+    Alle Frames im Datenset haben dieselben Abmessungen (\texttt{256x256x3}), die Sequenzen variieren allerdings in ihrer Länge zwischen 8 und 32 (Anzahl \texttt{*.png}-Bilder pro Item).
 
-    \begin{itemize}
-        \item Quelle
-        \item Ordnerstruktur der Daten
-    \end{itemize}
-
-    \newpage
     \section{Konzept}
     \subsection{Vorverarbeitung des Datensets}
+    Dadurch, dass die Sequenzlängen im Datenset variieren, muss bereits im Vorfeld festgelegt werden, welche Sequenzlänge das Modell verarbeiten soll.
+    
+    \begin{itemize}
+        \item Sequenzlängen-Filterung
+        \item Anzahl Elemente
+    \end{itemize}
     \begin{itemize}
         \item Preprocessing/Normalisierung/Mischen
         \item Anzahl Elemente Training/Test pro Klasse/Splits
@@ -79,7 +103,6 @@
         \item Detektionszeit
     \end{itemize}
 
-    \newpage
     \section{Implementierung}
     \begin{itemize}
         \item Entwicklungsumgebung/Cluster: MiniForge
