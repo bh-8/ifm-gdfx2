@@ -1,13 +1,20 @@
 \documentclass{article}
 
 \usepackage[german]{babel}
+\usepackage{caption}
 \usepackage{csquotes}
 \usepackage{geometry}
+\usepackage{graphicx}
 \usepackage{hyperref}
 \usepackage{listings}
+\usepackage{multirow}
 \usepackage{scrextend}
+\usepackage{tabularx}
+\usepackage{arydshln}
 \usepackage{xurl}
+
 \deffootnote{0em}{1.6em}{\thefootnotemark.\enskip}
+\def\arraystretch{1.2}
 
 \title{Generalizable Deepfake Detection}
 \author{Bernhard Birnbaum}
@@ -68,21 +75,39 @@ df40/
 
     \section{Konzept}
     \subsection{Vorverarbeitung des Datensets}
-    Dadurch, dass die Sequenzlängen im Datenset variieren, muss bereits im Vorfeld festgelegt werden, welche Sequenzlänge das Modell verarbeiten soll.
-    
-    \begin{itemize}
-        \item Sequenzlängen-Filterung
-        \item Anzahl Elemente
-    \end{itemize}
+    \subsubsection{Sequenzlängen-Filterung}
+    Dadurch, dass die Sequenzlängen im Datenset variieren, muss bereits im Vorfeld festgelegt werden, wie viele Frames das Modell pro Item verarbeiten soll.
+    Basierend auf der Sequenzlänge werden alle Sequenzen entweder zugeschnitten (sollten sie zu lang sein) oder aus dem Datenset entfernt (sollten sie zu kurz sein).
+    Alternativ könnten zu kurze Sequenzen auch mit Padding aufgefüllt werden.
+    Da das Datenset allerdings groß genug ist und nicht allzu viele Sequenzen betroffen sind, sowie zusätzlich unbalancierte Klassen mit Hilfe von gewichteten Klassen ausgeglichen werden, wurde darauf verzichtet.
+    \subsubsection{Instanzen pro Klasse}
+    Je nach Sequenzlänge ergeben sich somit die folgenden Anzahlen von Instanzen pro Klasse, wobei der Split (Einteilung Trainings- und Testdaten) vom Datensatz vorgegeben wird:
+    \begin{table}[!h]
+        \centering
+        \caption{Anzahl Instanzen pro Klasse im Trainings- und Testdatensatz}
+        \begin{tabularx}{\textwidth}{|X||c|c|c||c|c|c|}
+            \hline
+            \multirow{2}{*}{\textbf{Sequenzlänge}} & \multicolumn{3}{c||}{\textbf{Trainingsdaten}} & \multicolumn{3}{c|}{\textbf{Testdaten}} \\\cdashline{2-7}
+            & \texttt{OR} & \texttt{FS} & \texttt{FR} & \texttt{OR} & \texttt{FS} & \texttt{FR} \\
+            \hline
+            8 Frames  &  &  &  &  &  &  \\
+            \hline
+            12 Frames & 999 & 6509 & 8460 & 999 & 7070 & 9405 \\
+            \hline
+            16 Frames &  &  &  &  &  &  \\
+            \hline
+        \end{tabularx}
+    \end{table}
     \begin{itemize}
         \item Preprocessing/Normalisierung/Mischen
-        \item Anzahl Elemente Training/Test pro Klasse/Splits
     \end{itemize}
-    \subsection{Modelle}
-    Aufbau und Funktion der einzelnen Schichten:
+    \subsection{Aufbau des Modells}
+    Das in dieser Arbeit entwickelte Modell besteht aus den folgenden Schichten:
+    \begin{enumerate}
+        \item\textbf{Input-Layer}: In der Eingabeschicht wird die Form des Eingabetensors definiert. Diese ergibt sich zum einen aus den Abmessungen eines einzelnen Frames (\texttt{224x224x3}), zum anderen aus der Länge der Sequenz (\texttt{8}, \texttt{12} oder \texttt{16}), mit der das Modell arbeiten soll.
+        \item\textbf{FeatureExtraction-Layer}: Diese Schicht implementiert eine Merkmalsextraktion für jeden Frame in der Sequenz (\enquote{\texttt{TimeDistributed}}), wahlweise durch ResNet50 oder EfficientNetB0. Die Gewichte dieser Schicht werden initial mit vortrainierten Gewichten via \enquote{\texttt{imagenet}}~\footnote{ImageNet, \url{https://www.image-net.org/}} belegt.
+    \end{enumerate}
     \begin{itemize}
-        \item Input-Layer
-        \item Resnet50-Layer
         \item GlovalAvgPooling-Layer
         \item BiLSTM/Layer
         \item DropOut-Layer

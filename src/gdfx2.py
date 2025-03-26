@@ -13,7 +13,7 @@ IMG_SIZE          = (224, 224, 3)
 SEQ_LEN           = 12
 BATCH_SIZE        = 8
 EPOCHS            = 9
-EPOCHS_PATIENCE   = 5
+EPOCHS_PATIENCE   = 6
 LEARNING_RATE     = 1e-3
 WEIGHT_DECAY      = 3e-3
 DROPOUT           = 3e-1
@@ -122,8 +122,8 @@ model = create_model()
 # Model Checkpoint
 model_checkpoint = tf.keras.callbacks.ModelCheckpoint(filepath=IO_PATH + "/model.weights.h5", save_weights_only=True, verbose=1)
 
-# Early-Stopping (Training, bis Modell sich nicht weiter verbessert)
-early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=EPOCHS_PATIENCE, restore_best_weights=True)
+# Early-Stopping (Training, bis Modell sich nicht weiter verbessert) KEIN VALIDATION LOSS! ZU UNGENAU BZW. ZU ZEITAUFWÄNDIG
+early_stopping = tf.keras.callbacks.EarlyStopping(monitor="loss", patience=EPOCHS_PATIENCE, restore_best_weights=True)
 
 # Custom Callback to freeze baseline weights and update learning rate during training
 class FreezeBaselineCallback(tf.keras.callbacks.Callback):
