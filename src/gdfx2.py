@@ -98,7 +98,7 @@ def create_feature_extractor():
     if FEATURE_EXTRACTOR == "resnet":
         feature_extractor = tf.keras.applications.ResNet50(weights="imagenet", input_shape=IMG_SIZE, pooling="avg", include_top=False)
     elif FEATURE_EXTRACTOR == "efficientnet":
-        feature_extractor = tf.keras.applications.EfficientNetB3(weights="imagenet", input_shape=IMG_SIZE, pooling="avg", include_top=False)
+        feature_extractor = tf.keras.applications.EfficientNetB0(weights="imagenet", input_shape=IMG_SIZE, pooling="avg", include_top=False)
     else:
         return None
     feature_extractor.trainable = False
