@@ -124,7 +124,7 @@ model = create_model()
 model_checkpoint = tf.keras.callbacks.ModelCheckpoint(filepath=IO_PATH + "/model.weights.h5", save_weights_only=True, verbose=1)
 
 # Early-Stopping (Training, bis Modell sich nicht weiter verbessert)
-early_stopping = tf.keras.callbacks.EarlyStopping(monitor="loss", patience=EPOCHS_PATIENCE, restore_best_weights=True)
+early_stopping = tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=EPOCHS_PATIENCE, restore_best_weights=True)
 
 # Custom Callback to freeze baseline weights and update learning rate during training
 class FreezeBaselineCallback(tf.keras.callbacks.Callback):
@@ -149,7 +149,12 @@ model.summary()
 
 print("############################## TRAINING ##############################")
 
-history = model.fit(train_dataset, epochs=EPOCHS, class_weight=class_weights, validation_data=test_dataset, validation_freq=EPOCHS_PATIENCE, validation_steps=int(len(test_dataset) / (2 * BATCH_SIZE)), callbacks=[model_checkpoint, FreezeBaselineCallback()]) # early_stopping, 
+history = model.fit(train_dataset, epochs=EPOCHS, class_weight=class_weights, validation_data=test_dataset, validation_freq=EPOCHS_PATIENCE, validation_steps=int(len(test_dataset) / (2 * BATCH_SIZE)), callbacks=[model_checkpoint, early_stopping, FreezeBaselineCallback()])
+print(history)
+
+print("############################## EVALUATION ##############################")
+final_results = model.evaluate(test_dataset)
+print(final_results)
 
 print("############################## STORING ##############################")
 
