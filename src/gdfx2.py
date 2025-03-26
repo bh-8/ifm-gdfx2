@@ -17,7 +17,7 @@ EPOCHS_PATIENCE   = 3
 LEARNING_RATE     = 1e-3
 WEIGHT_DECAY      = 3e-3
 DROPOUT           = 3e-1
-FEATURE_EXTRACTOR = "resnet"
+FEATURE_EXTRACTOR = "efficientnet" # "resnet"
 
 print("############################## DATASET ##############################")
 
