@@ -137,7 +137,7 @@ class FreezeBaselineCallback(tf.keras.callbacks.Callback):
                 layer.trainable = True
             new_lr = (LEARNING_RATE / 10) / (2 ** epoch)
             model_optimizer.learning_rate.assign(new_lr)
-            print(f"Epoch {epoch + 1}: unfreezed {unfreeze_layers} layers of baseline model, set learning rate to {new_lr}")
+            print(f"Epoch {epoch + 1}: unfreezed {unfreeze_layers}/{len(fe_layer.layers)} layers of baseline model, set learning rate to {new_lr}")
         else:
             new_lr = LEARNING_RATE / (2 ** epoch)
             model_optimizer.learning_rate.assign(new_lr)
