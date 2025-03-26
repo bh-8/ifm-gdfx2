@@ -19,10 +19,6 @@ WEIGHT_DECAY      = 3e-3
 DROPOUT           = 3e-1
 FEATURE_EXTRACTOR = "resnet" # efficientnet/resnet
 
-print(IMG_SIZE[:2])
-import sys
-sys.exit(0)
-
 print("############################## DATASET ##############################")
 
 def df40_list_labeled_items(split_path: pl.Path):
