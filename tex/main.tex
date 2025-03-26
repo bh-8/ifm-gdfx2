@@ -23,13 +23,14 @@
     Zur Implementierung der Deepfake-Klassifikation werden Deeplearning-Methoden~\cite{deeplearningbook} eingesetzt.
     \subsection{Merkmalsextraktoren als Baseline-Modelle}
     \subsubsection{ResNet50}
-    ResNet50 ist eine CNN-Architektur (\enquote{Convolutional Neural Networks}) für tiefe neuronale Netzwerke, die zu den \enquote{Residual Networks} gehört und eine Tiefe von 50 Schichten aufweist.
+    ResNet50 ist eine CNN-Architektur (\enquote{Convolutional Neural Networks}) für tiefe neuronale Netzwerke, die zu den \enquote{Residual Networks}~\cite{resnet} gehört und eine Tiefe von 50 Schichten aufweist.
     ResNet-Modelle sind besonders gut für die Klassifikation von Bildern geeignet und erzielen dabei State-of-the-Art-Ergebnisse, weshalb sie auch häufig als Merkmalsextraktoren im Bereich des maschinellen Sehens eingesetzt werden~\footnote{Exploring ResNet50: An In-Depth Look at the Model Architecture and Code Implementation, \url{https://medium.com/@nitishkundu1993/exploring-resnet50-an-in-depth-look-at-the-model-architecture-and-code-implementation-d8d8fa67e46f}}.
     Um das Problem der Vanishing-Gradients zu lösen, also dass die Gradienten in den tieferen Schichten verschwindend gering werden, nutzt ResNet sogenannte \enquote{Residual Connections}, wodurch die Eingabedaten eine oder mehrere Schichten im Netzwerk \enquote{überspringen} können.
     \subsubsection{EfficientNetB0}
     EfficientNetB0 ist neben ResNet50 eine alternative CNN-Architektur und gehört zur EfficientNet-Familie~\cite{efficientnet}.
     Der Hauptunterschied zu ResNet besteht in der Skalierung: bei EfficientNet können nicht nur weitere Schichten hinzugefügt, sondern das Netz kann in Tiefe, Breite und Auflösung angepasst werden (\enquote{Compound Model Scaling})~\footnote{Understanding EfficientNet - The most powerful CNN architecture, \url{https://arjun-sarkar786.medium.com/understanding-efficientnet-the-most-powerful-cnn-architecture-eaeb40386fad}}.
     Desweiteren nutzt EfficientNet sogenannte \enquote{MBConv-Blöcke}, eine effizientere Strategie zur Implementierung von \enquote{Inverted Residual Blocks}.
+    Dadurch verringert sich die Parameteranzahl im Vergleich zu ResNet erheblich, was zu einem deutlich reduzierten Rechenaufwand bei ählicher Genauigkeit führt.
     \subsection{BiLSTMs}
     \begin{itemize}
         \item RNNs
@@ -37,8 +38,12 @@
         \item BiLSTMs % https://medium.com/@anishnama20/understanding-bidirectional-lstm-for-sequential-data-processing-b83d6283befc
     \end{itemize}
     \subsection{DF40-Datenset}
+    Um einen Klassifikator zu trainieren, der neben der Detektion zusätzlich verschiedene Arten von Deepfakes erkennen soll, ist ein breit gestreuter Trainings- bzw. Validierungsdatensatz notwendig.
+    Dafür wurde das DF40-Datenset~\cite{yan2024df40} ausgewählt, eine Sammlung von Deepfake-Erzeugnissen von 40 verschiedenen Tools inklusive der Originaldaten.
+    Im Rahmen dieser Arbeit soll in einem ersten Proof-of-Concept zunächst zwischen den Klassen \enquote{original}, \enquote{faceswap} (10 Tools) und \enquote{facereenactment} (13 Tools) unterschieden werden.
+
     \begin{itemize}
-        \item Quelle~\cite{yan2024df40}
+        \item Quelle
         \item Ordnerstruktur der Daten
     \end{itemize}
 
