@@ -4,6 +4,9 @@
 \usepackage{csquotes}
 \usepackage{geometry}
 \usepackage{hyperref}
+\usepackage{scrextend}
+\usepackage{xurl}
+\deffootnote{0em}{1.6em}{\thefootnotemark.\enskip}
 
 \title{Generalizable Deepfake Detection}
 \author{Bernhard Birnbaum}
@@ -20,11 +23,13 @@
     Zur Implementierung der Deepfake-Klassifikation werden Deeplearning-Methoden~\cite{deeplearningbook} eingesetzt.
     \subsection{Merkmalsextraktoren als Baseline-Modelle}
     \subsubsection{ResNet50}
+    ResNet50 ist eine CNN-Architektur (\enquote{Convolutional Neural Networks}) für tiefe neuronale Netzwerke, die zu den \enquote{Residual Networks} gehört und eine Tiefe von 50 Schichten aufweist.
+    ResNet-Modelle sind besonders gut für die Klassifikation von Bildern geeignet und erzielen dabei State-of-the-Art-Ergebnisse, weshalb sie auch häufig als Merkmalsextraktoren im Bereich des maschinellen Sehens eingesetzt werden~\footnote{Exploring ResNet50: An In-Depth Look at the Model Architecture and Code Implementation, \url{https://medium.com/@nitishkundu1993/exploring-resnet50-an-in-depth-look-at-the-model-architecture-and-code-implementation-d8d8fa67e46f}}.
+    Um das Problem der Vanishing-Gradients zu lösen, also dass die Gradienten in den tieferen Schichten verschwindend gering werden, nutzt ResNet sogenannte \enquote{Residual Connections}, wodurch die Eingabedaten eine oder mehrere Schichten im Netzwerk \enquote{überspringen} können.
     \subsubsection{EfficientNetB0}
-    \begin{itemize}
-        \item CNNs
-        \item Merkmalsextraktoren % https://medium.com/@nitishkundu1993/exploring-resnet50-an-in-depth-look-at-the-model-architecture-and-code-implementation-d8d8fa67e46f
-    \end{itemize}
+    EfficientNetB0 ist neben ResNet50 eine alternative CNN-Architektur und gehört zur EfficientNet-Familie~\cite{efficientnet}.
+    Der Hauptunterschied zu ResNet besteht in der Skalierung: bei EfficientNet können nicht nur weitere Schichten hinzugefügt, sondern das Netz kann in Tiefe, Breite und Auflösung angepasst werden (\enquote{Compound Model Scaling})~\footnote{Understanding EfficientNet - The most powerful CNN architecture, \url{https://arjun-sarkar786.medium.com/understanding-efficientnet-the-most-powerful-cnn-architecture-eaeb40386fad}}.
+    Desweiteren nutzt EfficientNet sogenannte \enquote{MBConv-Blöcke}, eine effizientere Strategie zur Implementierung von \enquote{Inverted Residual Blocks}.
     \subsection{BiLSTMs}
     \begin{itemize}
         \item RNNs
@@ -93,6 +98,7 @@
         \item Weitere Optimierungsmöglichkeiten
         \item ViT
         \item Vorverarbeitungsmethoden (Frames aus Video extrahieren und FaceCropping)
+        \item Auflösung erhöhen: Merkmalsextraktoren, Input-Size, ...
     \end{itemize}
 
     \bibliographystyle{plain}
