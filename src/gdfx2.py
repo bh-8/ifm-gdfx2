@@ -42,7 +42,7 @@ def df40_load_and_preprocess(path_sequence: list[str], label: int):
     def _load_image(image_path: str):
         image = tf.io.read_file(image_path)
         image = tf.image.decode_png(image, channels=3)
-        image = tf.image.resize(image, [256, 256])
+        image = tf.image.resize(image, [224, 224])
         #image = image / 255.0
         return image
     return tf.stack([tf.keras.applications.resnet.preprocess_input(_load_image(elem)) for elem in tf.unstack(path_sequence)] if FEATURE_EXTRACTOR == "resnet" else [_load_image(elem) for elem in tf.unstack(path_sequence)]), tf.one_hot(label, len(CLASS_LIST))

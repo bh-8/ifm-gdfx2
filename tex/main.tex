@@ -18,7 +18,9 @@
     Dazu wird zunächst ein Baseline-Modell trainiert, welches im weiteren Verlauf der Untersuchung mit verschiedenen Komponenten angepasst werden kann.
     Abschließend sollen die Auswirkungen auf die Modell-Performance anhand geeigneter Metriken evaluiert werden.
     Zur Implementierung der Deepfake-Klassifikation werden Deeplearning-Methoden~\cite{deeplearningbook} eingesetzt.
-    \subsection{Merkmalsextraktoren: ResNet50 \& EfficientNet}
+    \subsection{Merkmalsextraktoren als Baseline-Modelle}
+    \subsubsection{ResNet50}
+    \subsubsection{EfficientNetB0}
     \begin{itemize}
         \item CNNs
         \item Merkmalsextraktoren % https://medium.com/@nitishkundu1993/exploring-resnet50-an-in-depth-look-at-the-model-architecture-and-code-implementation-d8d8fa67e46f
@@ -104,9 +106,5 @@
         \item LR-Scheduler raus (bereits durch Adam abgedeckt), manuelle Anpassung der Lernrate/weight freezing
         \item class weights eingebaut: nachteile von over/undersampling
         \item Generell bericht: Was hat gut funktioniert, was nicht?
-    \end{itemize}
-    \begin{itemize}
-        \item Weitere Frage: Regularisierung sinnvoll? Bias/Kernel
-        \item Resnet und EfficientNet haben nutzen ein Klassenattribut = 1000 klassen. Sollte man das ändern?
     \end{itemize}
 \end{document}
