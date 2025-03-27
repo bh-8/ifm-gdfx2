@@ -37,6 +37,7 @@
     \subsection{Architekturen für sequentielle Daten}
     \begin{itemize}
         \item RNNs - LSTMs - BiLSTMs % https://medium.com/@anishnama20/understanding-bidirectional-lstm-for-sequential-data-processing-b83d6283befc
+        \item Ein LSTM-Netzwerk ist speziell darauf ausgelegt, sequentielle Abhängigkeiten zu erfassen. Es kann Informationen über vergangene Zeitpunkte behalten und damit zeitliche Muster in der Sequenz analysieren. Der hier verwendete BiLSTM-Layer erweitert diese Fähigkeit, indem er die Sequenz in beide Richtungen verarbeitet – sowohl vorwärts als auch rückwärts. Dies ermöglicht es dem Modell, Abhängigkeiten sowohl aus der Vergangenheit als auch aus der Zukunft eines Frames zu berücksichtigen.
     \end{itemize}
     \subsection{Merkmalsextraktoren als Baseline-Modelle}
     \subsubsection{\resnet}
@@ -107,30 +108,32 @@ df40/
         \item Preprocessing/Normalisierung/Mischen
     \end{itemize}
     \subsection{Aufbau des Modells}
-    Das in dieser Arbeit entwickelte Modell besteht aus den folgenden Schichten:
+    Das in dieser Arbeit entwickelte Modell implementiert eine Klassifikation von Bildsequenzen (mit fixer Länge und Auflösung) in 3 Klassen.
+    Die einzelnen Schichten sind dabei folgendermaßen charakterisiert:
     \begin{enumerate}
         \item\textbf{Input-Layer}:
             In der Eingabeschicht wird die Form des Eingabetensors definiert.
             Diese ergibt sich zum einen aus den Abmessungen eines einzelnen Frames \imgsize, zum anderen aus der Länge der Sequenz, mit der das Modell arbeiten soll.
             \\\textbf{Beispiel} für valide Form einer Eingabe (Sequenzlänge 12): \texttt{(12, 224, 224, 3)}
-        \item\textbf{TimeDistributed-Layer}:
-            Diese Schicht implementiert eine Merkmalsextraktion für jeden Frame in der Sequenz, wahlweise durch \resnet oder \effnet.
-            Die Gewichte dieser Schicht werden initial mit vortrainierten Gewichten via \enquote{\texttt{imagenet}}~\footnote{ImageNet, \url{https://www.image-net.org/}} belegt.
-            Die Aufgabe der Merkmalsextraktion ist, die Eingangsgröße durch Reduktion mit Faltungsschichten und Pooling-Operationen schrittweise zu verkleinern.
-            Für einen Frame \imgsize entsteht dadurch eine Feature-Map der Form \texttt{(7, 7, 2048)} bei \resnet bzw. \texttt{(7, 7, 1280)} bei \effnet.
-            Die Merkmale aus der letzten Faltungsschicht werden mit einem \enquote{GlobalAveragePooling2D} zusammengefasst.
-            Somit kann ein Frame an dieser Stelle durch einen Tensor der Form \texttt{(2048)} für \resnet bzw. \texttt{(1280)} für \effnet repräsentiert werden, welcher jeweils die extrahierten Merkmale eines Einzelbildes beinhaltet.
+        \item\textbf{TimeDistributed-Wrapper mit Merkmalsextraktion}:
+            Diese Schicht implementiert eine Merkmalsextraktion der zu klassifizierenden Bildsequenz, wahlweise durch \resnet oder \effnet.
+            Dabei ist das Ziel, die Eingangsgröße eines jeden Einzelbildes durch Reduktion mit Faltungsschichten und Pooling-Operationen schrittweise zu verkleinern.
+            Für jeden Frame \imgsize entsteht dadurch eine Feature-Map der Form \texttt{(7, 7, 2048)} bei \resnet bzw. \texttt{(7, 7, 1280)} bei \effnet.
+            Die Merkmale aus der letzten Faltung des Netzwerks werden abschließend mit einem GlobalAveragePooling2D zusammengefasst, wodurch jeder Frame der Sequenz auf einen Tensor der Form \texttt{(2048)} für \resnet bzw. \texttt{(1280)} für \effnet reduziert wird.
+            Da die Merkmalsextraktion auf jeden Frame der zu klassifizierenden Bildsequenz parallel angewandt werden muss, wird die Schicht in einem sogenannten TimeDistributed-Wrapper implementiert.
             \\\textbf{Beispiel} für valide Form einer Ausgabe (Sequenzlänge 12, \resnet): \texttt{(12, 2048)}
             \\\textbf{Beispiel} für valide Form einer Ausgabe (Sequenzlänge 12, \effnet): \texttt{(12, 1280)}
-        \item\textbf{BiLSTM-Layer}:
-            Die aufeinander folgenden Einzelbilder der zu klassifizierenden Sequenz werden in dieser Schicht 
-            Anschließend folgt ein bidirektionales LSTM.
+        \item\textbf{Bidirectional-Wrapper mit LSTM}:
+            Die Sequenz von Feature-Maps wird in der nächsten Schicht mit einem bidirektionalem LSTM verarbeitet.
+            Da das LSTM aus 256 Neuronen besteht und in beide Richtungen trainiert wird, werden insgesamt 512 Merkmalsdimensionenen erfasst.
+
         \item\textbf{Dropout-Layer}: 
         \item\textbf{Dense-Layer}: (Softmax, L2-Regularisierung, Kernel/Bias)
     \end{enumerate}
     \subsection{Training}
     \begin{itemize}
         \item Optimizer (adam)
+        \item FE: Die Gewichte dieser Schicht werden initial mit vortrainierten Gewichten via \enquote{\texttt{imagenet}}~\footnote{ImageNet, \url{https://www.image-net.org/}} belegt.
         \item Minimierung Loss Funktion (categorical crossentropy)
         \item LR-Scheduler (ReduceLROnPlateau)
         \item Epochen/Early-Stopping

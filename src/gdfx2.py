@@ -4,8 +4,11 @@ import numpy as np
 import pathlib as pl
 import random
 import tensorflow as tf
+import tensorflow.keras.applications as ap
+import tensorflow.keras.callbacks as cb
 import tensorflow.keras.layers as ly
 import tensorflow.keras.metrics as mt
+import tensorflow.keras.regularizers as rg
 import tensorflow_datasets as tfds
 
 CLASS_LIST        = ["original", "face_swap", "face_reenact"]
@@ -14,11 +17,12 @@ IMG_SIZE          = (224, 224, 3)
 SEQ_LEN           = 12
 BATCH_SIZE        = 8
 EPOCHS            = 9
-EPOCHS_PATIENCE   = 6
+EPOCHS_BASELINE   = 3
+EPOCHS_PATIENCE   = 3
 LEARNING_RATE     = 1e-3
 WEIGHT_DECAY      = 3e-3
 DROPOUT           = 3e-1
-FEATURE_EXTRACTOR = "resnet" # efficientnet/resnet
+FEATURE_EXTRACTOR = "efficientnet" # efficientnet/resnet
 
 print("############################## DATASET ##############################")
 
@@ -45,7 +49,7 @@ def df40_load_and_preprocess(path_sequence: list[str], label: int):
         image = tf.image.decode_png(image, channels=3)
         image = tf.image.resize(image, IMG_SIZE[:2])
         return image
-    return tf.stack([tf.keras.applications.resnet.preprocess_input(_load_image(elem)) for elem in tf.unstack(path_sequence)] if FEATURE_EXTRACTOR == "resnet" else [_load_image(elem) for elem in tf.unstack(path_sequence)]), tf.one_hot(label, len(CLASS_LIST))
+    return tf.stack([ap.resnet.preprocess_input(_load_image(elem)) for elem in tf.unstack(path_sequence)] if FEATURE_EXTRACTOR == "resnet" else [_load_image(elem) for elem in tf.unstack(path_sequence)]), tf.one_hot(label, len(CLASS_LIST))
 
 print("Enumerating items...")
 train_sequences, train_labels = df40_list_labeled_items(pl.Path(IO_PATH + "/df40/train").resolve())
@@ -96,9 +100,9 @@ model_optimizer = tf.keras.optimizers.AdamW(learning_rate=LEARNING_RATE, weight_
 def create_feature_extractor():
     feature_extractor = None
     if FEATURE_EXTRACTOR == "resnet":
-        feature_extractor = tf.keras.applications.ResNet50(weights="imagenet", input_shape=IMG_SIZE, pooling="avg", include_top=False)
+        feature_extractor = ap.ResNet50(weights="imagenet", input_shape=IMG_SIZE, pooling="avg", include_top=False)
     elif FEATURE_EXTRACTOR == "efficientnet":
-        feature_extractor = tf.keras.applications.EfficientNetB0(weights="imagenet", input_shape=IMG_SIZE, pooling="avg", include_top=False)
+        feature_extractor = ap.EfficientNetB0(weights="imagenet", input_shape=IMG_SIZE, pooling="avg", include_top=False)
     else:
         return None
     feature_extractor.trainable = False
@@ -110,10 +114,10 @@ def create_model():
         ly.TimeDistributed(
             create_feature_extractor(), name="baseline"
         ), ly.Bidirectional(
-            ly.LSTM(256, dropout=DROPOUT, recurrent_dropout=DROPOUT, kernel_regularizer=tf.keras.regularizers.l2(WEIGHT_DECAY), recurrent_regularizer=tf.keras.regularizers.l2(WEIGHT_DECAY)), name="bilstm"
+            ly.LSTM(256, dropout=DROPOUT, recurrent_dropout=DROPOUT, kernel_regularizer=rg.l2(WEIGHT_DECAY), recurrent_regularizer=rg.l2(WEIGHT_DECAY)), name="bilstm"
         ),
         ly.Dropout(DROPOUT),
-        ly.Dense(len(CLASS_LIST), activation="softmax", kernel_regularizer=tf.keras.regularizers.l2(WEIGHT_DECAY))
+        ly.Dense(len(CLASS_LIST), activation="softmax", kernel_regularizer=rg.l2(WEIGHT_DECAY))
     ])
     model.compile(optimizer=model_optimizer, loss="categorical_crossentropy", metrics=[mt.CategoricalAccuracy(name="cat_accuracy"), "f1_score", "precision", "recall"])
     return model
@@ -121,19 +125,19 @@ def create_model():
 model = create_model()
 
 # Model Checkpoint
-model_checkpoint = tf.keras.callbacks.ModelCheckpoint(filepath=IO_PATH + "/model.weights.h5", save_weights_only=True, verbose=1)
+model_checkpoint = cb.ModelCheckpoint(filepath=IO_PATH + "/model.weights.h5", save_weights_only=True, verbose=1)
 
 # Early-Stopping (Training, bis Modell sich nicht weiter verbessert) KEIN VALIDATION LOSS! ZU UNGENAU BZW. ZU ZEITAUFWÄNDIG
-early_stopping = tf.keras.callbacks.EarlyStopping(monitor="loss", patience=EPOCHS_PATIENCE, restore_best_weights=True)
+early_stopping = cb.EarlyStopping(monitor="loss", patience=EPOCHS_PATIENCE, restore_best_weights=True)
 
 # Custom Callback to freeze baseline weights and update learning rate during training
-class FreezeBaselineCallback(tf.keras.callbacks.Callback):
+class FreezeBaselineCallback(cb.Callback):
     def on_epoch_begin(self, epoch, logs=None):
         model.get_layer("baseline").trainable = False
         fe_layer = model.get_layer("baseline").layer
 
-        if epoch < EPOCHS_PATIENCE:
-            unfreeze_layers: int = int(len(fe_layer.layers) / float(2 ** (epoch + 1)))
+        if epoch < EPOCHS_BASELINE:
+            unfreeze_layers: int = int(len(fe_layer.layers) / float(2 ** (epoch + 2)))
             for layer in fe_layer.layers[-unfreeze_layers:]:
                 layer.trainable = True
             new_lr = (LEARNING_RATE / 10) / (2 ** epoch)
@@ -149,7 +153,6 @@ model.summary()
 print("############################## TRAINING ##############################")
 
 history = model.fit(train_dataset, epochs=EPOCHS, class_weight=class_weights, validation_data=test_dataset, validation_steps=int(len(test_dataset) / (5 * BATCH_SIZE)), callbacks=[model_checkpoint, early_stopping, FreezeBaselineCallback()])
-print(history)
 
 print("############################## EVALUATION ##############################")
 final_results = model.evaluate(test_dataset)
