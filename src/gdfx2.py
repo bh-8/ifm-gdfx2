@@ -17,7 +17,7 @@ EPOCHS_PATIENCE   = 6
 LEARNING_RATE     = 1e-3
 WEIGHT_DECAY      = 3e-3
 DROPOUT           = 3e-1
-FEATURE_EXTRACTOR = "resnet" # efficientnet/resnet
+FEATURE_EXTRACTOR = "efficientnet" # efficientnet/resnet
 
 print("############################## DATASET ##############################")
 

@@ -11,10 +11,15 @@
 \usepackage{scrextend}
 \usepackage{tabularx}
 \usepackage{arydshln}
+\usepackage{xspace}
 \usepackage{xurl}
 
 \deffootnote{0em}{1.6em}{\thefootnotemark.\enskip}
 \def\arraystretch{1.2}
+
+\newcommand{\imgsize}{\texttt{(224, 224, 3)}\xspace}
+\newcommand{\resnet}{ResNet50\xspace}
+\newcommand{\effnet}{EfficientNetB0\xspace}
 
 \title{Generalizable Deepfake Detection}
 \author{Bernhard Birnbaum}
@@ -34,12 +39,12 @@
         \item RNNs - LSTMs - BiLSTMs % https://medium.com/@anishnama20/understanding-bidirectional-lstm-for-sequential-data-processing-b83d6283befc
     \end{itemize}
     \subsection{Merkmalsextraktoren als Baseline-Modelle}
-    \subsubsection{ResNet50}
-    ResNet50 ist eine CNN-Architektur (\enquote{Convolutional Neural Networks}) für tiefe neuronale Netzwerke, die zu den \enquote{Residual Networks}~\cite{resnet} gehört und eine Tiefe von 50 Schichten aufweist.
+    \subsubsection{\resnet}
+    \resnet ist eine CNN-Architektur (\enquote{Convolutional Neural Networks}) für tiefe neuronale Netzwerke, die zu den \enquote{Residual Networks}~\cite{resnet} gehört und eine Tiefe von 50 Schichten aufweist.
     ResNet-Modelle sind besonders gut für die Klassifikation von Bildern geeignet und erzielen dabei State-of-the-Art-Ergebnisse, weshalb sie auch häufig als Merkmalsextraktoren im Bereich des maschinellen Sehens eingesetzt werden~\footnote{Exploring ResNet50: An In-Depth Look at the Model Architecture and Code Implementation, \url{https://medium.com/@nitishkundu1993/exploring-resnet50-an-in-depth-look-at-the-model-architecture-and-code-implementation-d8d8fa67e46f}}.
     Um das Problem der Vanishing-Gradients zu lösen, also dass die Gradienten in den tieferen Schichten verschwindend gering werden, nutzt ResNet sogenannte \enquote{Residual Connections}, wodurch die Eingabedaten eine oder mehrere Schichten im Netzwerk \enquote{überspringen} können.
-    \subsubsection{EfficientNetB0}
-    EfficientNetB0 ist neben ResNet50 eine alternative CNN-Architektur und gehört zur EfficientNet-Familie~\cite{efficientnet}.
+    \subsubsection{\effnet}
+    \effnet ist neben \resnet eine alternative CNN-Architektur und gehört zur EfficientNet-Familie~\cite{efficientnet}.
     Der Hauptunterschied zu ResNet besteht in der Skalierung: bei EfficientNet können nicht nur weitere Schichten hinzugefügt, sondern das Netz kann in Tiefe, Breite und Auflösung angepasst werden (\enquote{Compound Model Scaling})~\footnote{Understanding EfficientNet - The most powerful CNN architecture, \url{https://arjun-sarkar786.medium.com/understanding-efficientnet-the-most-powerful-cnn-architecture-eaeb40386fad}}.
     Desweiteren nutzt EfficientNet sogenannte \enquote{MBConv-Blöcke}, eine effizientere Strategie zur Implementierung von \enquote{Inverted Residual Blocks}.
     Dadurch verringert sich die Parameteranzahl im Vergleich zu ResNet erheblich, was zu einem deutlich reduzierten Rechenaufwand bei ählicher Genauigkeit führt.
@@ -104,11 +109,21 @@ df40/
     \subsection{Aufbau des Modells}
     Das in dieser Arbeit entwickelte Modell besteht aus den folgenden Schichten:
     \begin{enumerate}
-        \item\textbf{Input-Layer}: In der Eingabeschicht wird die Form des Eingabetensors definiert. Diese ergibt sich zum einen aus den Abmessungen eines einzelnen Frames (\texttt{224x224x3}), zum anderen aus der Länge der Sequenz (\texttt{8}, \texttt{12} oder \texttt{16}), mit der das Modell arbeiten soll. Beispielweise wäre ein Tensor der Form \texttt{(12, 224, 224, 3)} eine valide Eingabe für ein Modell mit Sequenzlänge \texttt{12}.
-        \item\textbf{FeatureExtraction-Layer}: Diese Schicht implementiert eine Merkmalsextraktion für jeden Frame (\texttt{224x224x3}) in der Sequenz (\enquote{TimeDistributed-Layer}), wahlweise durch ResNet50 oder EfficientNetB0. Die Gewichte dieser Schicht werden initial mit vortrainierten Gewichten via \enquote{\texttt{imagenet}}~\footnote{ImageNet, \url{https://www.image-net.org/}} belegt.
+        \item\textbf{Input-Layer}:
+            In der Eingabeschicht wird die Form des Eingabetensors definiert.
+            Diese ergibt sich zum einen aus den Abmessungen eines einzelnen Frames \imgsize, zum anderen aus der Länge der Sequenz, mit der das Modell arbeiten soll.
+            \\\textbf{Beispiel} für valide Form einer Eingabe (Sequenzlänge 12): \texttt{(12, 224, 224, 3)}
+        \item\textbf{TimeDistributed-Layer}:
+            Diese Schicht implementiert eine Merkmalsextraktion für jeden Frame in der Sequenz, wahlweise durch \resnet oder \effnet.
+            Die Gewichte dieser Schicht werden initial mit vortrainierten Gewichten via \enquote{\texttt{imagenet}}~\footnote{ImageNet, \url{https://www.image-net.org/}} belegt.
+            Die Aufgabe der Merkmalsextraktion ist, die Eingangsgröße durch Reduktion mit Faltungsschichten und Pooling-Operationen schrittweise zu verkleinern.
+            Für einen Frame \imgsize entsteht dadurch eine Feature-Map der Form \texttt{(7, 7, 2048)} bei \resnet bzw. \texttt{(7, 7, 1280)} bei \effnet.
+            Die Merkmale aus der letzten Faltungsschicht werden mit einem \enquote{GlobalAveragePooling2D} zusammengefasst.
+            Somit kann ein Frame an dieser Stelle durch einen Tensor der Form \texttt{(2048)} für \resnet bzw. \texttt{(1280)} für \effnet repräsentiert werden, welcher jeweils die extrahierten Merkmale eines Einzelbildes beinhaltet.
+            \\\textbf{Beispiel} für valide Form einer Ausgabe (Sequenzlänge 12, \resnet): \texttt{(12, 2048)}
+            \\\textbf{Beispiel} für valide Form einer Ausgabe (Sequenzlänge 12, \effnet): \texttt{(12, 1280)}
     \end{enumerate}
     \begin{itemize}
-        \item GlovalAvgPooling-Layer
         \item BiLSTM/Layer
         \item DropOut-Layer
         \item Dense-Layer (Softmax, L2-Regularisierung, Kernel/Bias)
@@ -157,14 +172,4 @@ df40/
 
     \bibliographystyle{plain}
     \bibliography{refs}
-
-    \section*{Anhang}
-    \begin{itemize}
-        \item Quellcodeauszüge
-        \item umgesetzt:
-        \item Normalisierung gefixed (Resnet/EfficientNet)
-        \item LR-Scheduler raus (bereits durch Adam abgedeckt), manuelle Anpassung der Lernrate/weight freezing
-        \item class weights eingebaut: nachteile von over/undersampling
-        \item Generell bericht: Was hat gut funktioniert, was nicht?
-    \end{itemize}
 \end{document}
