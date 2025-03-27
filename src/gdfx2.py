@@ -17,7 +17,7 @@ EPOCHS_PATIENCE   = 6
 LEARNING_RATE     = 1e-3
 WEIGHT_DECAY      = 3e-3
 DROPOUT           = 3e-1
-FEATURE_EXTRACTOR = "efficientnet" # efficientnet/resnet
+FEATURE_EXTRACTOR = "resnet" # efficientnet/resnet
 
 print("############################## DATASET ##############################")
 
@@ -109,12 +109,12 @@ def create_model():
         ly.TimeDistributed(
             create_feature_extractor(), name="baseline"
         ), ly.Bidirectional(
-            ly.LSTM(256), name="bilstm"
+            ly.LSTM(256, dropout=DROPOUT, recurrent_dropout=DROPOUT, kernel_regularizer=tf.keras.regularizers.l2(WEIGHT_DECAY), recurrent_regularizer=tf.keras.regularizers.l2(WEIGHT_DECAY)), name="bilstm"
         ),
         ly.Dropout(DROPOUT),
-        ly.Dense(len(CLASS_LIST), activation="softmax") # kernel_regularizer=tf.keras.regularizers.l2(WEIGHT_DECAY) [use weight decay in Adam optimizer instead?!]
+        ly.Dense(len(CLASS_LIST), activation="softmax", kernel_regularizer=tf.keras.regularizers.l2(WEIGHT_DECAY))
     ])
-    model.compile(optimizer=model_optimizer, loss="categorical_crossentropy", metrics=["auc", "categorical_accuracy", "f1_score"])
+    model.compile(optimizer=model_optimizer, loss="categorical_crossentropy", metrics=["categorical_accuracy", "f1_score", "precision", "recall"])
     return model
 
 model = create_model()

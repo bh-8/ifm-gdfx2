@@ -122,12 +122,12 @@ df40/
             Somit kann ein Frame an dieser Stelle durch einen Tensor der Form \texttt{(2048)} für \resnet bzw. \texttt{(1280)} für \effnet repräsentiert werden, welcher jeweils die extrahierten Merkmale eines Einzelbildes beinhaltet.
             \\\textbf{Beispiel} für valide Form einer Ausgabe (Sequenzlänge 12, \resnet): \texttt{(12, 2048)}
             \\\textbf{Beispiel} für valide Form einer Ausgabe (Sequenzlänge 12, \effnet): \texttt{(12, 1280)}
+        \item\textbf{BiLSTM-Layer}:
+            Die aufeinander folgenden Einzelbilder der zu klassifizierenden Sequenz werden in dieser Schicht 
+            Anschließend folgt ein bidirektionales LSTM.
+        \item\textbf{Dropout-Layer}: 
+        \item\textbf{Dense-Layer}: (Softmax, L2-Regularisierung, Kernel/Bias)
     \end{enumerate}
-    \begin{itemize}
-        \item BiLSTM/Layer
-        \item DropOut-Layer
-        \item Dense-Layer (Softmax, L2-Regularisierung, Kernel/Bias)
-    \end{itemize}
     \subsection{Training}
     \begin{itemize}
         \item Optimizer (adam)
