@@ -1,5 +1,5 @@
 import collections
-import datetime
+import math
 import numpy as np
 import pathlib as pl
 import random
@@ -9,20 +9,19 @@ import tensorflow.keras.callbacks as cb
 import tensorflow.keras.layers as ly
 import tensorflow.keras.metrics as mt
 import tensorflow.keras.regularizers as rg
-import tensorflow_datasets as tfds
 
 CLASS_LIST        = ["original", "face_swap", "face_reenact"]
 IO_PATH           = "./io"
 IMG_SIZE          = (224, 224, 3)
 SEQ_LEN           = 12
 BATCH_SIZE        = 8
-EPOCHS            = 9
+EPOCHS            = 12
 EPOCHS_BASELINE   = 3
-EPOCHS_PATIENCE   = 3
+EPOCHS_PATIENCE   = 6
 LEARNING_RATE     = 1e-3
 WEIGHT_DECAY      = 3e-3
 DROPOUT           = 3e-1
-FEATURE_EXTRACTOR = "efficientnet" # efficientnet/resnet
+FEATURE_EXTRACTOR = "resnet" # efficientnet/resnet
 
 print("############################## DATASET ##############################")
 
@@ -128,7 +127,7 @@ model = create_model()
 model_checkpoint = cb.ModelCheckpoint(filepath=IO_PATH + "/model.weights.h5", save_weights_only=True, verbose=1)
 
 # Early-Stopping (Training, bis Modell sich nicht weiter verbessert) KEIN VALIDATION LOSS! ZU UNGENAU BZW. ZU ZEITAUFWÄNDIG
-early_stopping = cb.EarlyStopping(monitor="loss", patience=EPOCHS_PATIENCE, restore_best_weights=True)
+early_stopping = cb.EarlyStopping(monitor="val_loss", patience=EPOCHS_PATIENCE, restore_best_weights=True)
 
 # Custom Callback to freeze baseline weights and update learning rate during training
 class FreezeBaselineCallback(cb.Callback):
@@ -137,10 +136,10 @@ class FreezeBaselineCallback(cb.Callback):
         fe_layer = model.get_layer("baseline").layer
 
         if epoch < EPOCHS_BASELINE:
-            unfreeze_layers: int = int(len(fe_layer.layers) / float(2 ** (epoch + 2)))
+            unfreeze_layers: int = math.ceil(len(fe_layer.layers) / float(2 ** (epoch + 2)))
             for layer in fe_layer.layers[-unfreeze_layers:]:
                 layer.trainable = True
-            new_lr = (LEARNING_RATE / 10) / (2 ** epoch)
+            new_lr = LEARNING_RATE / (10 * 2 ** epoch)
             model_optimizer.learning_rate.assign(new_lr)
             print(f"Epoch {epoch + 1}: unfreezed {unfreeze_layers}/{len(fe_layer.layers)} layers of baseline model, set learning rate to {new_lr}")
         else:
@@ -152,14 +151,14 @@ model.summary()
 
 print("############################## TRAINING ##############################")
 
-history = model.fit(train_dataset, epochs=EPOCHS, class_weight=class_weights, validation_data=test_dataset, validation_steps=int(len(test_dataset) / (5 * BATCH_SIZE)), callbacks=[model_checkpoint, early_stopping, FreezeBaselineCallback()])
-
-print("############################## EVALUATION ##############################")
-final_results = model.evaluate(test_dataset)
-print(final_results)
+history = model.fit(train_dataset, epochs=EPOCHS, class_weight=class_weights, validation_data=test_dataset, validation_steps=math.ceil(len(test_dataset) / (2 * BATCH_SIZE)), callbacks=[model_checkpoint, early_stopping, FreezeBaselineCallback()])
 
 print("############################## STORING ##############################")
 
 store_path: str = IO_PATH + f"/model-{FEATURE_EXTRACTOR}-{EPOCHS}ep-{SEQ_LEN}sl.keras"
 print(f"Saving final model state to '{store_path}'")
 model.save(store_path)
+
+print("############################## EVALUATION ##############################")
+final_results = model.evaluate(test_dataset)
+print(final_results)

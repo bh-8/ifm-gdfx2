@@ -7,6 +7,7 @@
 \usepackage{graphicx}
 \usepackage{hyperref}
 \usepackage{listings}
+\usepackage{lmodern}
 \usepackage{multirow}
 \usepackage{scrextend}
 \usepackage{tabularx}
@@ -94,14 +95,10 @@ df40/
         \begin{tabularx}{\textwidth}{|X||c|c|c||c|c|c|}
             \hline
             \multirow{2}{*}{\textbf{Sequenzlänge}} & \multicolumn{3}{c||}{\textbf{Trainingsdaten}} & \multicolumn{3}{c|}{\textbf{Testdaten}} \\\cdashline{2-7}
-            & \texttt{OR} & \texttt{FS} & \texttt{FR} & \texttt{OR} & \texttt{FS} & \texttt{FR} \\
-            \hline
-            8 Frames  &  &  &  &  &  &  \\
-            \hline
-            12 Frames & 999 & 6509 & 8460 & 999 & 7070 & 9405 \\
-            \hline
-            16 Frames &  &  &  &  &  &  \\
-            \hline
+            & \texttt{OR} & \texttt{FS} & \texttt{FR} & \texttt{OR} & \texttt{FS} & \texttt{FR} \\\hline\hline
+            8 Frames  &  &  &  &  &  &  \\\hline
+            12 Frames & 999 & 6509 & 8460 & 999 & 7070 & 9405 \\\hline
+            16 Frames &  &  &  &  &  &  \\\hline
         \end{tabularx}
     \end{table}
     \begin{itemize}
@@ -124,26 +121,76 @@ df40/
             \\\textbf{Beispiel} für valide Form einer Ausgabe (Sequenzlänge 12, \resnet): \texttt{(12, 2048)}
             \\\textbf{Beispiel} für valide Form einer Ausgabe (Sequenzlänge 12, \effnet): \texttt{(12, 1280)}
         \item\textbf{Bidirectional-Wrapper mit LSTM}:
-            Die Sequenz von Feature-Maps wird in der nächsten Schicht mit einem bidirektionalem LSTM verarbeitet.
-            Da das LSTM aus 256 Neuronen besteht und in beide Richtungen trainiert wird, werden insgesamt 512 Merkmalsdimensionenen erfasst.
-
-        \item\textbf{Dropout-Layer}: 
-        \item\textbf{Dense-Layer}: (Softmax, L2-Regularisierung, Kernel/Bias)
+            Die Sequenz von Feature-Maps wird in der nächsten Schicht mit einem LSTM verarbeitet.
+            Da das LSTM aus 256 Neuronen besteht und mit Hilfe des Bidirectional-Wrappers in beide Richtungen trainiert wird, werden insgesamt 512 Merkmalsdimensionenen erfasst.
+            Desweiteren werden mehrere Maßnahmen gegen Overfitting in das Modell etabliert:
+            Zum einen wird auf die Eingaben und rekurrenten Verbindungen der LSTM-Zellen ein Dropout eingeführt, zum anderen wird auf die Gewichte der Eingangsverbindungen und rekurrenten Verbindungen eine L2-Regularisierung angewandt.
+            Die Ausgabe des BiLSTM enthält eine verdichtete Darstellung der gesamten Bildsequenz, einschließlich relevanter zeitlicher Abhängigkeiten. 
+            \\\textbf{Beispiel} für valide Form einer Ausgabe: \texttt{(512)}
+        \item\textbf{Dropout-Layer}:
+            Nach der Sequenzverarbeitung wird eine weitere Dropout-Schicht auf die gesamte Ausgabe des BiLSTMs angewandt.
+        \item\textbf{Dense-Layer}:
+            In einer abschließenden vollständig verbundenen Schicht werden die vom BiLSTM extrahierten Merkmale in die Klassifikationswerte umgewandelt.
+            Dabei werden besonders große Gewichte bestraft, indem eine weitere L2-Regularisierung zum Einsatz kommt.
+            Für jede Klasse gibt es ein Neuron in der Ausgabeschicht.
+            Als Aktivierungsfunktion wird \texttt{softmax} genutzt, welche die Rohwerte in Wahrscheinlichkeiten für die Klassen umwandelt, sodass die Summe über alle Neurone der Ausgabe 1 ergibt.
+            \\\textbf{Beispiel} für valide Form einer Ausgabe: \texttt{(3)}
     \end{enumerate}
+    \begin{table}[!h]
+        \centering
+        \caption{Modellkonfigurationen}
+        \begin{tabularx}{\textwidth}{|X|X||c|c|}
+            \hline
+            \textbf{Sequenzlänge} & \textbf{Batch Size} & \textbf{\resnet} & \textbf{\effnet} \\\hline\hline
+            8 Frames & 12er Batches & X & X \\\hline
+            12 Frames & 8er Batches & X & X \\\hline
+            16 Frames & 6er Batches & X & X \\\hline
+        \end{tabularx}
+    \end{table}
     \subsection{Training}
     \begin{itemize}
-        \item Optimizer (adam)
-        \item FE: Die Gewichte dieser Schicht werden initial mit vortrainierten Gewichten via \enquote{\texttt{imagenet}}~\footnote{ImageNet, \url{https://www.image-net.org/}} belegt.
-        \item Minimierung Loss Funktion (categorical crossentropy)
-        \item LR-Scheduler (ReduceLROnPlateau)
-        \item Epochen/Early-Stopping
+        \item\textbf{Optimierer}:
+            \\Zum Trainieren wird der Optimizer AdamW verwendet, eine um Weight-Decay erweiterte Variante des Adam-Optimizers (Adaptive Moment Estimation mit L2-Regularisierung).
+            AdamW verwaltet für jede Gewichtskomponente eine eigene Lernrate, die dynamisch angepasst wird, wodurch auf einen zusätzlichen LR-Scheduler verzichtet werden kann.
+            % Desweiteren werden vergangene Gradienten mit aktuellen Gradienten kombiniert, um stabilere Updates zu ermöglichen. 
+        \item\textbf{Verlustfunktion}:
+            \\Als zu minimierende Verlustfunktion wird CategoricalCrossEntropyLoss verwendet:
+            \\$\displaystyle L=-\sum_{i=1}^Cy_i\log(\hat y_i)$ mit Anzahl Klassen $C$, Grundwahrheit $y_i$ und Vorhersage $\hat y_i$
+        \item\textbf{Merkmalsextraktoren}:
+            \\Dem ausgewählten Merkmalsextraktor (\resnet oder \effnet) werden initial vortrainierte Gewichte via \texttt{imagenet}~\footnote{ImageNet, \url{https://www.image-net.org/}} zugewiesen.
+            In den ersten 3 Epochen des Trainings wird er einem Fine-Tuning unterzogen.
+            Die Anzahl von Schichten, deren Gewichte für das Training freigegeben werden sollen, wird mit folgender Formel berechnet:
+            \\$\displaystyle u_i=\Big\lceil\frac{d}{2^{(2+i)}}\Big\rceil$ mit Epoche $i$ und Tiefe des Merkmalsextraktors $d$
+            \\Die Berechnung der Lernrate unterscheidet sich:
+            \\Lernrate während Fine-Tuning $\displaystyle \lambda^\alpha_i=\frac{\lambda}{10\cdot 2^i}$, Lernrate nach dem Fine-Tuning $\displaystyle \lambda^\beta_i=\frac{\lambda}{2^i}$
+            \\
+            \begin{table}[!h]
+                \centering
+                \caption{Keras-Schichten für Fine-Tuning der Merkmalsextraktoren und Lernrate pro Epoche}
+                \begin{tabularx}{\textwidth}{|X||c|c||c|}
+                    \hline
+                    \textbf{Epoche} & \textbf{\resnet ($d=176$)} & \textbf{\effnet ($d=239$)} & \textbf{Lernrate ($\lambda=0.001$)} \\\hline\hline
+                    Epoche 1 & $u_0=44$ (25\%) & $u_0=60$ (25\%) & $\lambda_0=\lambda^\alpha_0=1\cdot 10^{-4}$ \\\hline
+                    Epoche 2 & $u_1=22$ (12.5\%) & $u_1=30$ (12.5\%) & $\lambda_1=\lambda^\alpha_1=5\cdot 10^{-5}$ \\\hline
+                    Epoche 3 & $u_2=11$ (6.25\%) & $u_2=15$ (6.25\%) & $\lambda_2=\lambda^\alpha_2=2.5\cdot 10^{-5}$ \\\hline
+                    Epoche 4 & keine & keine & $\lambda_3=\lambda^\beta_3=1.25\cdot 10^{-4}$ \\\hline
+                    Epoche 5 & keine & keine & $\lambda_4=\lambda^\beta_4=6.25\cdot 10^{-5}$ \\\hline
+                    Epoche 6 & keine & keine & $\lambda_5=\lambda^\beta_5=3.125\cdot 10^{-5}$ \\\hline
+                    Epoche 7 & keine & keine & $\lambda_6=\lambda^\beta_6=1.5625\cdot 10^{-5}$ \\\hline
+                    Epoche 8 & keine & keine & $\lambda_7=\lambda^\beta_7=7.8125\cdot 10^{-6}$ \\\hline
+                    Epoche 9 & keine & keine & $\lambda_8=\lambda^\beta_8=3.90625\cdot 10^{-6}$ \\\hline
+                \end{tabularx}
+            \end{table}
+        \item Early-Stopping oder fixe Epochen?
     \end{itemize}
     \subsection{Validation}
     \begin{itemize}
         \item categorical accuracy
         \item f1 score
-        \item area under curve
+        \item precision
+        \item recall
         \item Detektionszeit
+        \item warum kein area under curve
     \end{itemize}
 
     \section{Implementierung}
