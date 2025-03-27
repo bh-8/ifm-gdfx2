@@ -5,6 +5,7 @@ import pathlib as pl
 import random
 import tensorflow as tf
 import tensorflow.keras.layers as ly
+import tensorflow.keras.metrics as mt
 import tensorflow_datasets as tfds
 
 CLASS_LIST        = ["original", "face_swap", "face_reenact"]
@@ -114,7 +115,7 @@ def create_model():
         ly.Dropout(DROPOUT),
         ly.Dense(len(CLASS_LIST), activation="softmax", kernel_regularizer=tf.keras.regularizers.l2(WEIGHT_DECAY))
     ])
-    model.compile(optimizer=model_optimizer, loss="categorical_crossentropy", metrics=["categorical_accuracy", "f1_score", "precision", "recall"])
+    model.compile(optimizer=model_optimizer, loss="categorical_crossentropy", metrics=[mt.CategoricalAccuracy(name="cat_accuracy"), "f1_score", "precision", "recall"])
     return model
 
 model = create_model()
