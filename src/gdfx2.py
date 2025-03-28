@@ -18,9 +18,10 @@ BATCH_SIZE        = 8
 EPOCHS            = 12
 EPOCHS_BASELINE   = 3
 EPOCHS_PATIENCE   = 6
-LEARNING_RATE     = 1e-3
-WEIGHT_DECAY      = 3e-3
-DROPOUT           = 3e-1
+LEARNING_RATE     = 1e-3 # 0.001
+LEARNING_RATE_MIN = 1e-5 # 0.00001
+WEIGHT_DECAY      = 3e-3 # 0.003
+DROPOUT           = 5e-1 # 0.5
 FEATURE_EXTRACTOR = "resnet" # efficientnet/resnet
 
 print("############################## DATASET ##############################")
@@ -113,9 +114,9 @@ def create_model():
         ly.TimeDistributed(
             create_feature_extractor(), name="baseline"
         ), ly.Bidirectional(
-            ly.LSTM(256, dropout=DROPOUT, recurrent_dropout=DROPOUT, kernel_regularizer=rg.l2(WEIGHT_DECAY), recurrent_regularizer=rg.l2(WEIGHT_DECAY)), name="bilstm"
+            ly.LSTM(256, dropout=DROPOUT, recurrent_dropout=DROPOUT, kernel_regularizer=rg.l2(WEIGHT_DECAY / 100), recurrent_regularizer=rg.l2(WEIGHT_DECAY / 100)), name="bilstm"
         ),
-        ly.Dropout(DROPOUT),
+        ly.Dropout(DROPOUT / 2),
         ly.Dense(len(CLASS_LIST), activation="softmax", kernel_regularizer=rg.l2(WEIGHT_DECAY))
     ])
     model.compile(optimizer=model_optimizer, loss="categorical_crossentropy", metrics=[mt.CategoricalAccuracy(name="cat_accuracy"), "f1_score", "precision", "recall"])
@@ -144,6 +145,8 @@ class FreezeBaselineCallback(cb.Callback):
             print(f"Epoch {epoch + 1}: unfreezed {unfreeze_layers}/{len(fe_layer.layers)} layers of baseline model, set learning rate to {new_lr}")
         else:
             new_lr = LEARNING_RATE / (2 ** epoch)
+            if new_lr < LEARNING_RATE_MIN:
+                new_lr = LEARNING_RATE_MIN
             model_optimizer.learning_rate.assign(new_lr)
             print(f"Epoch {epoch + 1}: freezed all layers of baseline model, set learning rate to {new_lr}")
 
