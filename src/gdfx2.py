@@ -15,7 +15,7 @@ IO_PATH           = "./io"
 IMG_SIZE          = (224, 224, 3)
 SEQ_LEN           = 12
 BATCH_SIZE        = 8
-EPOCHS            = 12
+EPOCHS            = 9
 EPOCHS_BASELINE   = 3
 EPOCHS_PATIENCE   = 6
 LEARNING_RATE     = 1e-3 # 0.001
@@ -125,7 +125,7 @@ def create_model():
 model = create_model()
 
 # Model Checkpoint
-model_checkpoint = cb.ModelCheckpoint(filepath=IO_PATH + "/model.weights.h5", save_weights_only=True, verbose=1)
+model_checkpoint = cb.ModelCheckpoint(filepath=IO_PATH + f"/model-{FEATURE_EXTRACTOR}-sl{SEQ_LEN:02d}-chckpnt-{{epoch:02d}}.keras", verbose=1)
 
 # Early-Stopping (Training, bis Modell sich nicht weiter verbessert) KEIN VALIDATION LOSS! ZU UNGENAU BZW. ZU ZEITAUFWÄNDIG
 early_stopping = cb.EarlyStopping(monitor="val_loss", patience=EPOCHS_PATIENCE, restore_best_weights=True)
@@ -154,11 +154,11 @@ model.summary()
 
 print("############################## TRAINING ##############################")
 
-history = model.fit(train_dataset, epochs=EPOCHS, class_weight=class_weights, validation_data=test_dataset, validation_steps=math.ceil(len(test_dataset) / (2 * BATCH_SIZE)), callbacks=[model_checkpoint, early_stopping, FreezeBaselineCallback()])
+history = model.fit(train_dataset, epochs=EPOCHS, class_weight=class_weights, validation_data=test_dataset, validation_steps=math.ceil(len(test_dataset) / (2 * BATCH_SIZE)), callbacks=[model_checkpoint, FreezeBaselineCallback()])
 
 print("############################## STORING ##############################")
 
-store_path: str = IO_PATH + f"/model-{FEATURE_EXTRACTOR}-{EPOCHS}ep-{SEQ_LEN}sl.keras"
+store_path: str = IO_PATH + f"/model-{FEATURE_EXTRACTOR}-sl{SEQ_LEN:02d}-final.keras"
 print(f"Saving final model state to '{store_path}'")
 model.save(store_path)
 

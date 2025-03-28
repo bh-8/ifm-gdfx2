@@ -1,5 +1,6 @@
 \documentclass{article}
 
+\usepackage{amsmath}
 \usepackage[german]{babel}
 \usepackage{caption}
 \usepackage{csquotes}
@@ -8,6 +9,7 @@
 \usepackage{hyperref}
 \usepackage{listings}
 \usepackage{lmodern}
+\usepackage{mathtools}
 \usepackage{multirow}
 \usepackage{scrextend}
 \usepackage{tabularx}
@@ -159,26 +161,37 @@ df40/
         \item\textbf{Merkmalsextraktoren}:
             \\Dem ausgewählten Merkmalsextraktor (\resnet oder \effnet) werden initial vortrainierte Gewichte via \texttt{imagenet}~\footnote{ImageNet, \url{https://www.image-net.org/}} zugewiesen.
             In den ersten 3 Epochen des Trainings wird er einem Fine-Tuning unterzogen.
-            Die Anzahl von Schichten, deren Gewichte für das Training freigegeben werden sollen, wird mit folgender Formel berechnet:
-            \\$\displaystyle u_i=\Big\lceil\frac{d}{2^{(2+i)}}\Big\rceil$ mit Epoche $i$ und Tiefe des Merkmalsextraktors $d$
-            \\Die Berechnung der Lernrate unterscheidet sich:
-            \\Lernrate während Fine-Tuning $\displaystyle \lambda^\alpha_i=\frac{\lambda}{10\cdot 2^i}$, Lernrate nach dem Fine-Tuning $\displaystyle \lambda^\beta_i=\frac{\lambda}{2^i}$
-            \\
+            Die Anzahl von Schichten, deren Gewichte für das Training freigegeben werden sollen, wird mit folgender Formel berechnet (für Epoche $i$ und Tiefe des Merkmalsextraktors $d$):
+            \\\[
+                u_i= 
+            \begin{dcases}
+                \Big\lceil\frac{d}{2^{(2+i)}}\Big\rceil & \text{if } 0\le i \le 2\\
+                0 & \text{otherwise}
+            \end{dcases}
+            \]
+            \\Die Größe der Lernrate wird basierend auf $\lambda=0.001$ durch:
+            \\\[
+                \lambda_i= 
+            \begin{dcases}
+                \frac{\lambda}{10\cdot 2^i} & \text{if } 0\le i \le 2\\
+                \max(\frac{\lambda}{2^i}, 1\cdot 10^{-5}) & \text{otherwise}
+            \end{dcases}
+            \]
             \begin{table}[!h]
                 \centering
                 \caption{Keras-Schichten für Fine-Tuning der Merkmalsextraktoren und Lernrate pro Epoche}
                 \begin{tabularx}{\textwidth}{|X||c|c||c|}
                     \hline
                     \textbf{Epoche} & \textbf{\resnet ($d=176$)} & \textbf{\effnet ($d=239$)} & \textbf{Lernrate ($\lambda=0.001$)} \\\hline\hline
-                    Epoche 1 & $u_0=44$ (25\%) & $u_0=60$ (25\%) & $\lambda_0=\lambda^\alpha_0=1\cdot 10^{-4}$ \\\hline
-                    Epoche 2 & $u_1=22$ (12.5\%) & $u_1=30$ (12.5\%) & $\lambda_1=\lambda^\alpha_1=5\cdot 10^{-5}$ \\\hline
-                    Epoche 3 & $u_2=11$ (6.25\%) & $u_2=15$ (6.25\%) & $\lambda_2=\lambda^\alpha_2=2.5\cdot 10^{-5}$ \\\hline
-                    Epoche 4 & keine & keine & $\lambda_3=\lambda^\beta_3=1.25\cdot 10^{-4}$ \\\hline
-                    Epoche 5 & keine & keine & $\lambda_4=\lambda^\beta_4=6.25\cdot 10^{-5}$ \\\hline
-                    Epoche 6 & keine & keine & $\lambda_5=\lambda^\beta_5=3.125\cdot 10^{-5}$ \\\hline
-                    Epoche 7 & keine & keine & $\lambda_6=\lambda^\beta_6=1.5625\cdot 10^{-5}$ \\\hline
-                    Epoche 8 & keine & keine & $\lambda_7=\lambda^\beta_7=7.8125\cdot 10^{-6}$ \\\hline
-                    Epoche 9 & keine & keine & $\lambda_8=\lambda^\beta_8=3.90625\cdot 10^{-6}$ \\\hline
+                    Epoche 1 & $u_0=44$ (25\%) & $u_0=60$ (25\%) & $\lambda_0=1\cdot 10^{-4}$ \\\hline
+                    Epoche 2 & $u_1=22$ (12.5\%) & $u_1=30$ (12.5\%) & $\lambda_1=5\cdot 10^{-5}$ \\\hline
+                    Epoche 3 & $u_2=11$ (6.25\%) & $u_2=15$ (6.25\%) & $\lambda_2=2.5\cdot 10^{-5}$ \\\hline
+                    Epoche 4 & \multirow{6}{*}{n.a.} & \multirow{6}{*}{n.a.} & $\lambda_3=1.25\cdot 10^{-4}$ \\\cline{1-1}\cline{4-4}
+                    Epoche 5 &  &  & $\lambda_4=6.25\cdot 10^{-5}$ \\\cline{1-1}\cline{4-4}
+                    Epoche 6 &  &  & $\lambda_5=3.125\cdot 10^{-5}$ \\\cline{1-1}\cline{4-4}
+                    Epoche 7 &  &  & $\lambda_6=1.5625\cdot 10^{-5}$ \\\cline{1-1}\cline{4-4}
+                    Epoche 8 &  &  & $\lambda_7=1\cdot 10^{-5}$ \\\cline{1-1}\cline{4-4}
+                    Epoche 9 &  &  & $\lambda_8=1\cdot 10^{-5}$ \\\hline
                 \end{tabularx}
             \end{table}
         \item Early-Stopping oder fixe Epochen?
