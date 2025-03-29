@@ -13,8 +13,8 @@ import tensorflow.keras.regularizers as rg
 CLASS_LIST        = ["original", "face_swap", "face_reenact"]
 IO_PATH           = "./io"
 IMG_SIZE          = (224, 224, 3)
-SEQ_LEN           = 8
-BATCH_SIZE        = 12
+SEQ_LEN           = 16
+BATCH_SIZE        = 6
 EPOCHS            = 9
 EPOCHS_BASELINE   = 3
 EPOCHS_PATIENCE   = 6
@@ -22,7 +22,7 @@ LEARNING_RATE     = 1e-3 # 0.001
 LEARNING_RATE_MIN = 1e-5 # 0.00001
 WEIGHT_DECAY      = 3e-3 # 0.003
 DROPOUT           = 5e-1 # 0.5
-FEATURE_EXTRACTOR = "efficientnet" # efficientnet/resnet
+FEATURE_EXTRACTOR = "resnet" # efficientnet/resnet
 
 print("############################## DATASET ##############################")
 
