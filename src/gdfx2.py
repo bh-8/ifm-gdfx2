@@ -22,7 +22,7 @@ LEARNING_RATE     = 1e-3 # 0.001
 LEARNING_RATE_MIN = 1e-5 # 0.00001
 WEIGHT_DECAY      = 3e-3 # 0.003
 DROPOUT           = 5e-1 # 0.5
-FEATURE_EXTRACTOR = "resnet" # efficientnet/resnet
+FEATURE_EXTRACTOR = "efficientnet" # efficientnet/resnet
 
 print("############################## DATASET ##############################")
 
