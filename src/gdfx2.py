@@ -14,7 +14,7 @@ CLASS_LIST        = ["original", "face_swap", "face_reenact"]
 IO_PATH           = "./io"
 IMG_SIZE          = (224, 224, 3)
 SEQ_LEN           = 16
-BATCH_SIZE        = 6
+BATCH_SIZE        = 4
 EPOCHS            = 9
 EPOCHS_BASELINE   = 3
 EPOCHS_PATIENCE   = 6
@@ -119,9 +119,9 @@ def create_model():
         ly.Dropout(DROPOUT / 2),
         ly.Dense(len(CLASS_LIST), activation="softmax", kernel_regularizer=rg.l2(WEIGHT_DECAY))
     ])
-    model.compile(optimizer=model_optimizer, loss="categorical_crossentropy", metrics=[mt.CategoricalAccuracy(name="cat_accuracy"), "f1_score", "precision", "recall"])
+    model.compile(optimizer=model_optimizer, loss="categorical_crossentropy", metrics=[mt.CategoricalAccuracy(name="ca"), mt.F1Score(name="fs_weighted", average="weighted"), mt.F1Score(name="fs"), mt.Precision(name="p"), mt.Recall(name="r")])
     return model
-
+# 3562680
 model = create_model()
 
 # Model Checkpoint
