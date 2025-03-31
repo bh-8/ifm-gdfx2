@@ -69,7 +69,7 @@ print(tf.config.list_physical_devices("GPU"))
 model_path: pl.Path = pl.Path(IO_PATH).resolve() / f"model-{FEATURE_EXTRACTOR}-sl{SEQ_LEN:02d}-final.keras"
 model = tf.keras.models.load_model(model_path, compile=False)
 model.compile(
-    loss=None,
+    loss="categorical_crossentropy",
     optimizer=None,
     metrics=[
         mt.CategoricalAccuracy(name="ca"),
