@@ -161,7 +161,3 @@ print("############################## STORING ##############################")
 store_path: str = IO_PATH + f"/model-{FEATURE_EXTRACTOR}-sl{SEQ_LEN:02d}-final.keras"
 print(f"Saving final model state to '{store_path}'")
 model.save(store_path)
-
-print("############################## EVALUATION ##############################")
-final_results = model.evaluate(test_dataset)
-print(final_results)

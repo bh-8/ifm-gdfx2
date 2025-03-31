@@ -13,9 +13,15 @@
 \usepackage{multirow}
 \usepackage{scrextend}
 \usepackage{tabularx}
+\usepackage{titlesec}
 \usepackage{arydshln}
 \usepackage{xspace}
 \usepackage{xurl}
+
+\titlespacing*{\section}
+{0pt}{1ex plus 1ex minus .2ex}{0.3ex plus .2ex}
+\titlespacing*{\subsection}
+{0pt}{1ex plus 1ex minus .2ex}{0.3ex plus .2ex}
 
 \deffootnote{0em}{1.6em}{\thefootnotemark.\enskip}
 \def\arraystretch{1.2}
@@ -27,9 +33,9 @@
     %\setlength\abovedisplayshortskip{-8pt}%
     %\setlength\belowdisplayshortskip{2pt}%
 }
-\setlength{\itemsep}{3pt}
-\setlength{\parsep}{3pt}
-\setlength{\topsep}{3pt}
+%\setlength{\itemsep}{3pt}
+%\setlength{\parsep}{3pt}
+%\setlength{\topsep}{3pt}
 
 \newcommand{\imgsize}{\texttt{(224, 224, 3)}\xspace}
 \newcommand{\resnet}{ResNet50\xspace}
@@ -150,7 +156,7 @@ Im folgenden werden der Ablauf sowie die Parameter des Trainings erläutert.
 \textbf{Trainingskonfigurationen}:\\
 Insgesamt sollen 6 verschiedene Konfigurationen der Modellarchitektur trainiert werden.
 Dabei werden zum einen zwei verschiedene Merkmalsextraktoren als Baseline-Modell getestet (\resnet und \effnet), zum anderen wird die zu klassifizierende Sequenzlänge variiert (8 Frames, 12 Frames, 16 Frames).
-Um variierenden den Speicherbedarf durch die verschiedenen Sequenzlängen auszugleichen, wird die Batch-Size entsprechend angepasst (8 Frames $\rightarrow$ 12er Batches, 12 Frames $\rightarrow$ 8er Batches, 16 Frames $\rightarrow$ 6er Batches).
+Um variierenden den Speicherbedarf durch die verschiedenen Sequenzlängen auszugleichen, wird die Batch-Size entsprechend angepasst (8 Frames $\rightarrow$ 12er Batches, 12 Frames $\rightarrow$ 8er Batches, 16 Frames $\rightarrow$ 4er Batches).
 Zur besseren Vergleichbarkeit der Modelle wurde auf \textit{early stopping} verzichtet und alle Konfigurationen werden für exakt 9 Epochen trainiert.
 \\[0.5em]
 \textbf{Optimierer}:\\
@@ -222,36 +228,85 @@ Diese müssen für Multi-Klassen-Probleme geeignet sein und insbesondere mit una
     \end{center}
 
 \section{Implementierung}\label{sec:implementation}
-Das in dieser Untersuchung entwickelte Modell wurde mit TensorFlow in Python implementiert.
+Das in dieser Untersuchung entwickelte Modell (siehe Abs.~\ref{ssec:model}) wurde mit TensorFlow in Python implementiert.
 Als Paket- und Umgebungsmanagement wurde MiniForge mit Mamba verwendet.
 Die folgenden Tools bzw. Versionen müssen in der virtuellen Umgebung installiert sein:
 \begin{itemize}
-    \item 
+    \item Python 3.12.9
+    \item tensorflow 2.18.0
+    \item numpy 2.0.2
+    \item keras 3.8.0
+    \item NVIDIA CUDA 12.5.82
 \end{itemize}
 \textbf{PyTorch vs. TensorFlow}:\\
-\dots Vergleich und Abwägung
+Für die Implementierung des Modells wurden die beiden ML-Frameworks PyTorch und TensorFlow betrachtet:
+\\
+PyTorch ist sehr dynamisch bzw. erweiterbar und deshalb für Forschung und Experimente prinzipiell geeignet.
+Durch die flexiblen Nutzungsmöglichkeiten ergibt sich allerdings auch eine steilere Lernkurve.
+Der Einsatz von PyTorch ist deshalb vor allem dann sinnvoll, wenn mehr Kontrolle über das Modell(training) benötigt wird.
+\\
+TensorFlow hingegen bietet durch die große Anzahl von High-Level-Schnittstellen und die umfangreiche Dokumentation einen einfacheren Einstieg.
+Es ist zudem sehr gut dazu geeignet, mit wenig Code einen lauffähigen Prototypen mit automatischen Optimierungen zu erstellen.
+Da im Rahmen dieser Arbeit keine neuen Komponenten für Netze entwickelt werden, sondern lediglich bereits bestehende zu einem neuen Modell kombiniert werden, und zuden wenig praktisches Vorwissen vorhanden war, ist TensorFlow als Framework die bessere Wahl.
 
 \section{Evaluation}
+Insgesamt wurden 6 Modellkonfigurationen für jeweils 9 Epochen trainiert (siehe Abs.~\ref{ssec:training}). 
+Mit den in Abs.~\ref{ssec:validation} aufgeführten Metriken ergeben sich die folgenden Zahlen zur Performance der Modelle:
+\begin{table}[!h]
+    \centering
+    \caption{Auswertung der Klassifikationsergebnisse nach 9 Epochen Training}
+    \begin{tabularx}{\textwidth}{|X||c|c|c|c|}
+        \hline
+        \textbf{Modellkonfiguration} & \textbf{Precision} & \textbf{Recall} & \textbf{F1-Score} & \textbf{F1-Score (gewichtet)} \\\hline\hline
+        \resnet, 8 SL, 12 BS &  &  &  &  \\\hline
+        \resnet, 12 SL, 8 BS &  &  &  &  \\\hline
+        \resnet, 16 SL, 4 BS &  &  &  &  \\\hline
+        \effnet, 8 SL, 12 BS &  &  &  &  \\\hline
+        \effnet, 12 SL, 8 BS &  &  &  &  \\\hline
+        \effnet, 16 SL, 4 BS &  &  &  &  \\\hline
+    \end{tabularx}
+    \label{tab:evaluation}
+\end{table}
+\begin{itemize}
+    \item \textbf{ToDo}: Metriken und Detektionszeiten erfassen und eintragen
+    \item \textbf{ToDo}: Auswertung/Bewertung
+\end{itemize}
 
-    \begin{itemize}
-        \item Model Performance anhand von Metriken
-        \item categorical accuracy/auc nochmal aufgreifen irgendwo?
-        \item Detektionszeit
-    \end{itemize}
+\section{Zusammenfassung}
+\subsection{Fazit}
+\begin{itemize}
+    \item \textbf{ToDo}: Fazit \dots
+\end{itemize}
 
-    \section{Zusammenfassung}
-    \subsection{Fazit}
-    \subsection{Ausblick für zukünftige Arbeiten}
-    \begin{itemize}
-        \item DataAugmentation
-        \item zusätzlicher Validierungsdatensatz % https://huggingface.co/datasets/faridlab/deepspeak_v1
-        \item Weitere Klassen einfügen (über FS und FR hinaus)
-        \item Weitere Optimierungsmöglichkeiten
-        \item ViT
-        \item Vorverarbeitungsmethoden (Frames aus Video extrahieren und FaceCropping)
-        \item Auflösung erhöhen: Merkmalsextraktoren, Input-Size, ...
-    \end{itemize}
+\subsection{Ausblick für zukünftige Arbeiten}
+\textbf{Weitere Klassen}:\\
+Im DF40-Datensatz sind neben \textit{face-swap}- und \textit{face-reenactment}-Sequenzen auch Erzeugnisse von \textit{entire face synthesis}- oder \textit{face edit}-Tools vorhanden.
+In einer weiterführenden Untersuchung kann geprüft werden, ob die Modelle auch für 4 bzw. 5 Klassen ausreichend gute Ergebnisse erzielen.
+\\[0.5em]
+\textbf{Vision Transformer als Merkmalsextraktor}:\\
+Die entwickelten Modelle nutzen aktuell beide CNN-Architekturen, entweder \resnet oder \effnet als Baseline-Klassifikator.
+Vision Transformer stellen einen alternativen Ansatz zur Merkmalsextraktion mittels \textit{self attention} dar.
+In einer weiterführenden Arbeit könnte ein entsprechend angepasstes Transformer-Modell mit der Performance der Modelle dieser Arbeit verglichen werden.  
+\\[0.5em]
+\textbf{Data Augmentation}:\\
+In dieser Arbeit wurden Klassengewichte genutzt, um unausgewogene Klassen zu balancieren.
+Alternativ könnte mit einer Datenaugmentation eine fortgeschrittene Oversampling-Technik eingesetzt werden, um zusätzliche Datenpunkte zu erstellen.
+Eine gute Datenaugmentation hat das Potenzial, das Generalisierungsvermögen der Modelle weiter zu steigern.
+\\[0.5em]
+\textbf{Zusätzliche Validierungsdaten}:\\
+Der DF40-Datensatz wird zwar bereits mit einem Validierungssplit ausgeliefert, allerdings sollte noch mindestens ein weiteres Datenset (z.B. DeepSpeakV1~\footnote{DeepSpeakV1, \url{https://huggingface.co/datasets/faridlab/deepspeak_v1}}) hinzugezogen werden, um die Generalisierung auf einer breiteren Datenbasis zu bestätigen.
+\\[0.5em]
+\textbf{Erweiterte Vorverarbeitung}:\\
+Das Modell kann aktuell nur Bildsequenzen mit Framegröße \imgsize klassifizieren.
+Deshalb sollte in Framework um das Modell herum implementiert werden, welches geeignete Frames zunächst aus einem zu überprüfenden Video extrahiert (\textit{face detection}) und zuschneidet (\textit{cropping}).
+Erst mit der extrahierten Sequenz kann das Modell praktisch genutzt werden.
+\\[0.5em]
+\textbf{Auflösung erhöhen}:\\
+Zu guter Letzt verarbeiten die aktuell verwendeten Merkmalsextraktoren \resnet und \effnet Bilder der Größe \imgsize.
+Da die Bilder im DF40-Datensatz eine Größe von \texttt{256x256x3} haben, gehen durch die \textit{resizing}-Operation einige Informationen verloren.
+Durch die Verwendung gesteigerter Netztiefen und -breiten könnten die Ergebnisse eventuell weiter verbessert werden.
 
+\newpage
 \bibliographystyle{plain}
 \bibliography{refs}
 
