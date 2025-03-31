@@ -75,16 +75,17 @@ model.compile(
         mt.CategoricalAccuracy(name="ca"),
         mt.CategoricalCrossentropy(name="cc"),
         mt.F1Score(name="f1"),
-        mt.F1Score(name="f1_w", average="weighted"),
-        mt.Precision(name="p0_or", class_id=0),
-        mt.Precision(name="p1_fs", class_id=1),
-        mt.Precision(name="p2_fr", class_id=2),
-        mt.Recall(name="r0_or", class_id=0),
-        mt.Recall(name="r1_fs", class_id=1),
-        mt.Recall(name="r2_fr", class_id=2)
+        mt.F1Score(name="f1w", average="weighted"),
+        mt.Precision(name="p0", class_id=0),
+        mt.Precision(name="p1", class_id=1),
+        mt.Precision(name="p2", class_id=2),
+        mt.Recall(name="r0", class_id=0),
+        mt.Recall(name="r1", class_id=1),
+        mt.Recall(name="r2", class_id=2)
     ]
 )
 model.summary()
+print(f"!!!!!!!!!!!!!!!!!!!!!!!!! {model.metrics_names}")
 
 start_time = time.time()
 final_results = model.evaluate(test_dataset)
