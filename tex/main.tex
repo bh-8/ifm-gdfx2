@@ -218,11 +218,11 @@ Diese müssen für Multi-Klassen-Probleme geeignet sein und insbesondere mit una
 \\[0.5em]
 \textbf{Precision}: Misst den Anteil der korrekt vorhergesagten positiven Instanzen im Verhältnis zu allen Instanzen, die als positiv vorhergesagt wurden:
     \begin{center}
-        $\displaystyle P_i=\frac{\text{TP}_i}{(\text{TP}_i+\text{FP}_i)}$ bzw. $\displaystyle P_\text{micro}=\frac{\sum_{i=1}^C\text{TP}_i}{\sum_{i=1}^C(\text{TP}_i+\text{FP}_i)}$ (aggregierter Durchschnittswert)
+        $\displaystyle P_i=\frac{\text{TP}_i}{(\text{TP}_i+\text{FP}_i)}$ % bzw. $\displaystyle P_\text{micro}=\frac{\sum_{i=1}^C\text{TP}_i}{\sum_{i=1}^C(\text{TP}_i+\text{FP}_i)}$ (aggregierter Durchschnittswert)
     \end{center}
 \textbf{Recall}: Misst den Anteil der korrekt vorhergesagten positiven Instanzen im Verhältnis zu allen tatsächlichen positiven Instanzen.
     \begin{center}
-        $\displaystyle R_i=\frac{\text{TP}_i}{(\text{TP}_i+\text{FN}_i)}$ bzw. $\displaystyle R_\text{micro}=\frac{\sum_{i=1}^C\text{TP}_i}{\sum_{i=1}^C(\text{TP}_i+\text{FN}_i)}$ (aggregierter Durchschnittswert)
+        $\displaystyle R_i=\frac{\text{TP}_i}{(\text{TP}_i+\text{FN}_i)}$ % bzw. $\displaystyle R_\text{micro}=\frac{\sum_{i=1}^C\text{TP}_i}{\sum_{i=1}^C(\text{TP}_i+\text{FN}_i)}$ (aggregierter Durchschnittswert)
     \end{center}
 \textbf{F1-Score}: Ist das harmonische Mittel von Precision und Recall und bietet eine ausgewogene Metrik für die Modellleistung. Bei unbalancierten Daten erhalten Klassen mit mehr Instanzen ein höheres Gewicht.
     \begin{center}
@@ -258,16 +258,16 @@ Mit den in Abs.~\ref{ssec:validation} aufgeführten Metriken ergeben sich die fo
     \footnotesize
     \centering
     \caption{Auswertung der Klassifikationsergebnisse nach 9 Epochen Training}
-    \begin{tabularx}{\textwidth}{|X|c|c|c|c|c|c|c|c|c|}
+    \begin{tabularx}{\textwidth}{|X|c|c|c|c|c|c|c|c|}
         \hline
-        \multirow{2}{*}{\textbf{Modellkonfiguration}} & \multirow{2}{*}{\makecell{\textbf{Zeit}\\pro Item}} & \multirow{2}{*}{\makecell{\textbf{cat.}\\\textbf{Accuracy}}} & \multicolumn{3}{c|}{\textbf{Precision}} & \multicolumn{3}{c|}{\textbf{Recall}} & \multirow{2}{*}{\makecell{\textbf{F1-Score}\\(gewichtet)}} \\\cdashline{4-9}
-        & & & \texttt{OR} & \texttt{FS} & \texttt{FR} & \texttt{OR} & \texttt{FS} & \texttt{FR} &  \\\hline\hline
-        \resnet-08 &  44 $\text{ms}$ & 0.8829 & 0.9248 & 0.9322 & 0.3927 & 0.9980 & 0.7717 & 0.5264 & 0.7476 (0.9090) \\\hline
-        \resnet-12 &  67 $\text{ms}$ & 0.8849 & 0.9109 & 0.9331 & 0.3957 & 0.9990 & 0.7739 & 0.5260 & 0.7461 (0.9100) \\\hline
-        \resnet-16 & 102 $\text{ms}$ & 0.8812 & 0.9342 & 0.9333 & 0.3889 & 0.9979 & 0.7668 & 0.5257 & 0.7473 (0.9082) \\\hline
-        \effnet-08 &  38 $\text{ms}$ & 0.8341 & 0.8589 & 0.9291 & 0.3603 & 0.9922 & 0.6930 & 0.5243 & 0.7093 (0.8670) \\\hline
-        \effnet-12 &  59 $\text{ms}$ & 0.8655 & 0.8657 & 0.9228 & 0.3866 & 0.9820 & 0.7498 & 0.5211 & 0.7255 (0.8925) \\\hline
-        \effnet-16 &  90 $\text{ms}$ & 0.8326 & 0.8450 & 0.9249 & 0.3634 & 0.9827 & 0.6957 & 0.5242 &  \\\hline
+        \multirow{2}{*}{\makecell[l]{\textbf{Modellkonfiguration}\\(Merkmalsextraktor, Sequenzlänge)}} & \multirow{2}{*}{\makecell{\textbf{Zeit}\\pro Item}} & \multicolumn{3}{c|}{\textbf{Precision}} & \multicolumn{3}{c|}{\textbf{Recall}} & \multirow{2}{*}{\makecell{\textbf{F1-Score}\\(gewichtet)}} \\\cdashline{3-8}
+        & & \texttt{OR} & \texttt{FS} & \texttt{FR} & \texttt{OR} & \texttt{FS} & \texttt{FR} &  \\\hline\hline
+        \resnet-08 &  44 $\text{ms}$ & 0.9248 & 0.9322 & 0.3927 & 0.9980 & 0.7717 & 0.5264 & 0.7476 (0.9090) \\\hline
+        \resnet-12 &  67 $\text{ms}$ & 0.9109 & 0.9331 & 0.3957 & 0.9990 & 0.7739 & 0.5260 & 0.7461 (0.9100) \\\hline
+        \resnet-16 & 102 $\text{ms}$ & 0.9342 & 0.9333 & 0.3889 & 0.9979 & 0.7668 & 0.5257 & 0.7473 (0.9082) \\\hline
+        \effnet-08 &  38 $\text{ms}$ & 0.8589 & 0.9291 & 0.3603 & 0.9922 & 0.6930 & 0.5243 & 0.7093 (0.8670) \\\hline
+        \effnet-12 &  59 $\text{ms}$ & 0.8657 & 0.9228 & 0.3866 & 0.9820 & 0.7498 & 0.5211 & 0.7255 (0.8925) \\\hline
+        \effnet-16 &  90 $\text{ms}$ & 0.8450 & 0.9249 & 0.3634 & 0.9827 & 0.6957 & 0.5242 & 0.7043 (0.8656) \\\hline
     \end{tabularx}
     \label{tab:evaluation}
 \end{table}
