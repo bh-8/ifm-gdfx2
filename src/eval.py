@@ -13,9 +13,9 @@ import time
 CLASS_LIST        = ["original", "face_swap", "face_reenact"]
 IO_PATH           = "./io"
 IMG_SIZE          = (224, 224, 3)
-SEQ_LEN           = 8
-BATCH_SIZE        = 12
-FEATURE_EXTRACTOR = "efficientnet" # "resnet" # "efficientnet"
+SEQ_LEN           = 12
+BATCH_SIZE        = 8
+FEATURE_EXTRACTOR = "resnet" # "resnet" # "efficientnet"
 
 print("############################## DATASET ##############################")
 

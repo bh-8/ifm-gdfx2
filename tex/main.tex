@@ -25,6 +25,7 @@
 {0pt}{1ex plus 1ex minus .2ex}{0.3ex plus .2ex}
 
 \deffootnote{0em}{1.6em}{\thefootnotemark.\enskip}
+\setlength{\tabcolsep}{0.3em}
 \def\arraystretch{1.2}
 
 \expandafter\def\expandafter\normalsize\expandafter{%
@@ -260,7 +261,7 @@ Mit den in Abs.~\ref{ssec:validation} aufgeführten Metriken ergeben sich die fo
         \hline
         \multirow{2}{*}{\textbf{Modellkonfiguration}} & \multirow{2}{*}{\textbf{FPS}} & \multicolumn{3}{c|}{\textbf{Precision}} & \multicolumn{3}{c|}{\textbf{Recall}} & \multirow{2}{*}{\makecell{\textbf{F1-Score}\\(gewichtet)}} \\\cdashline{3-8}
         & & \texttt{OR} & \texttt{FS} & \texttt{FR} & \texttt{OR} & \texttt{FS} & \texttt{FR} &  \\\hline\hline
-        \resnet-8 &  &  &  &  &  &  &  &  \\\hline
+        \resnet-8 & 182 & 0.9248 & 0.9322 & 0.3927 & 0.9980 & 0.7717 & 0.5264 & 0.7476 (0.9090) \\\hline
         \effnet-8 &  &  &  &  &  &  &  &  \\\hline
         \resnet-12 &  &  &  &  &  &  &  &  \\\hline
         \effnet-12 &  &  &  &  &  &  &  &  \\\hline
