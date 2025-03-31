@@ -73,7 +73,22 @@ print(tf.config.list_physical_devices("GPU"))
 
 model_path: pl.Path = pl.Path(IO_PATH).resolve() / f"model-{FEATURE_EXTRACTOR}-sl{SEQ_LEN:02d}-final.keras"
 model = tf.keras.models.load_model(model_path, compile=False)
-model.compile(optimizer=None, loss="categorical_crossentropy", metrics=[mt.CategoricalAccuracy(name="ca"), mt.F1Score(name="fs_weighted", average="weighted"), mt.F1Score(name="fs"), mt.Precision(name="p"), mt.Precision(name="p_or", class_id=0), mt.Precision(name="p_fs", class_id=1), mt.Precision(name="p_fr", class_id=2), mt.Recall(name="r"), mt.Recall(name="r_or", class_id=0), mt.Recall(name="r_fs", class_id=1), mt.Recall(name="r_fr", class_id=2)])
+model.compile(
+    loss=None,
+    optimizer=None,
+    metrics=[
+        mt.CategoricalAccuracy(name="ca"),
+        mt.CategoricalCrossentropy(name="cc"),
+        mt.F1Score(name="f1"),
+        mt.F1Score(name="f1_w", average="weighted"),
+        mt.Precision(name="p0_or", class_id=0),
+        mt.Precision(name="p1_fs", class_id=1),
+        mt.Precision(name="p2_fr", class_id=2),
+        mt.Recall(name="r0_or", class_id=0),
+        mt.Recall(name="r1_fs", class_id=1),
+        mt.Recall(name="r2_fr", class_id=2)
+    ]
+)
 model.summary()
 
 start_time = time.time()
@@ -82,4 +97,13 @@ end_time = time.time()
 tps = (end_time - start_time) / test_dataset_items
 fps = 1 / (tps / SEQ_LEN)
 print(f"Durchschnittliche Klassifikationszeit: {tps:.6f} Sekunden pro Sample, FPS: {fps:.6f}")
-print(final_results)
+print(f"  ca: {final_results[0]}")
+print(f"  cc: {final_results[1]}")
+print(f"  f1: {final_results[2]}")
+print(f"  f1_w: {final_results[3]}")
+print(f"  p0_or: {final_results[4]}")
+print(f"  p1_fs: {final_results[5]}")
+print(f"  p2_fr: {final_results[6]}")
+print(f"  r0_or: {final_results[7]}")
+print(f"  r1_fs: {final_results[8]}")
+print(f"  r2_fr: {final_results[9]}")
