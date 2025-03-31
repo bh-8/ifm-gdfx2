@@ -271,6 +271,23 @@ Mit den in Abs.~\ref{ssec:validation} aufgeführten Metriken ergeben sich die fo
     \end{tabularx}
     \label{tab:evaluation}
 \end{table}
+\begin{table}[!h]
+    \footnotesize
+    \centering
+    \caption{Auswertung der Klassifikationsergebnisse nach 9 Epochen Training}
+    \begin{tabularx}{\textwidth}{|X|c|c|c|c|c|c|c|c|}
+        \hline
+        \multirow{2}{*}{\makecell[l]{\textbf{Modellkonfiguration}\\(Merkmalsextraktor, Sequenzlänge)}} & \multirow{2}{*}{\makecell{\textbf{Zeit}\\pro Item}} & \multicolumn{3}{c|}{\textbf{Precision}} & \multicolumn{3}{c|}{\textbf{Recall}} & \multirow{2}{*}{\makecell{\textbf{F1-Score}\\(gewichtet)}} \\\cdashline{3-8}
+        & & \texttt{OR} & \texttt{FS} & \texttt{FR} & \texttt{OR} & \texttt{FS} & \texttt{FR} &  \\\hline\hline
+        \resnet-08 &  $\text{ms}$ &  &  &  &  &  &  &  () \\\hline
+        \resnet-12 &  $\text{ms}$ &  &  &  &  &  &  &  () \\\hline
+        \resnet-16 &  $\text{ms}$ &  &  &  &  &  &  &  () \\\hline
+        \effnet-08 &  $\text{ms}$ &  &  &  &  &  &  &  () \\\hline
+        \effnet-12 &  $\text{ms}$ &  &  &  &  &  &  &  () \\\hline
+        \effnet-16 &  $\text{ms}$ &  &  &  &  &  &  &  () \\\hline
+    \end{tabularx}
+    \label{tab:evaluation2}
+\end{table}
 \begin{itemize}
     \item \textbf{ToDo}: Metriken und Detektionszeiten erfassen und eintragen
     \item \textbf{ToDo}: Auswertung/Bewertung
