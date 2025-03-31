@@ -9,6 +9,7 @@
 \usepackage{hyperref}
 \usepackage{listings}
 \usepackage{lmodern}
+\usepackage{makecell}
 \usepackage{mathtools}
 \usepackage{multirow}
 \usepackage{scrextend}
@@ -255,15 +256,16 @@ Mit den in Abs.~\ref{ssec:validation} aufgeführten Metriken ergeben sich die fo
 \begin{table}[!h]
     \centering
     \caption{Auswertung der Klassifikationsergebnisse nach 9 Epochen Training}
-    \begin{tabularx}{\textwidth}{|X||c|c|c|c|}
+    \begin{tabularx}{\textwidth}{|X||c|c|c||c|c|c||c|}
         \hline
-        \textbf{Modellkonfiguration} & \textbf{Precision} & \textbf{Recall} & \textbf{F1-Score} & \textbf{F1-Score (gewichtet)} \\\hline\hline
-        \resnet, 8 SL, 12 BS &  &  &  &  \\\hline
-        \resnet, 12 SL, 8 BS &  &  &  &  \\\hline
-        \resnet, 16 SL, 4 BS &  &  &  &  \\\hline
-        \effnet, 8 SL, 12 BS &  &  &  &  \\\hline
-        \effnet, 12 SL, 8 BS &  &  &  &  \\\hline
-        \effnet, 16 SL, 4 BS &  &  &  &  \\\hline
+        \multirow{2}{*}{\textbf{Modellkonfiguration}} & \multicolumn{3}{c|}{\textbf{Precision}} & \multicolumn{3}{c||}{\textbf{Recall}} & \multirow{2}{*}{\makecell{\textbf{F1-Score}\\(gewichtet)}} \\\cdashline{2-7}
+        & \texttt{OR} & \texttt{FS} & \texttt{FR} & \texttt{OR} & \texttt{FS} & \texttt{FR} &  \\\hline\hline
+        \resnet-8 &  &  &  &  &  &  &  \\\hline
+        \effnet-8 &  &  &  &  &  &  &  \\\hline
+        \resnet-12 &  &  &  &  &  &  &  \\\hline
+        \effnet-12 &  &  &  &  &  &  &  \\\hline
+        \resnet-16 &  &  &  &  &  &  &  \\\hline
+        \effnet-16 &  &  &  &  &  &  &  \\\hline
     \end{tabularx}
     \label{tab:evaluation}
 \end{table}

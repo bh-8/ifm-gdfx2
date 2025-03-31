@@ -52,8 +52,10 @@ test_dataset = tf.data.Dataset.from_tensor_slices((test_sequences, test_labels))
 test_dataset_classes = collections.Counter([int(l.numpy()) for (_, l) in test_dataset])
 
 print("Test Dataset:")
+test_dataset_items = 0
 for i, c in enumerate(CLASS_LIST):
     print(f"  {c}: {test_dataset_classes[i]}x")
+    test_dataset_items = test_dataset_items + test_dataset_classes[i]
 
 print("Prefetching items...")
 test_dataset = test_dataset.map(df40_load_and_preprocess, num_parallel_calls=tf.data.AUTOTUNE).batch(BATCH_SIZE)
@@ -71,6 +73,6 @@ model.summary()
 start_time = time.time()
 final_results = model.evaluate(test_dataset)
 end_time = time.time()
-tps = (end_time - start_time) / len(test_dataset)
+tps = (end_time - start_time) / test_dataset_items
 fps = 1 / (tps / SEQ_LEN)
 print(f"Durchschnittliche Klassifikationszeit: {tps:.6f} Sekunden pro Sample, FPS: {fps:.6f}")
