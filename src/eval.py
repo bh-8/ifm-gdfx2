@@ -15,7 +15,7 @@ IO_PATH           = "./io"
 IMG_SIZE          = (224, 224, 3)
 SEQ_LEN           = 16
 BATCH_SIZE        = 4
-FEATURE_EXTRACTOR = "resnet"
+FEATURE_EXTRACTOR = "efficientnet"
 
 print("############################## DATASET ##############################")
 
