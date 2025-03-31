@@ -16,7 +16,7 @@ IO_PATH           = "./io"
 IMG_SIZE          = (224, 224, 3)
 SEQ_LEN           = 8
 BATCH_SIZE        = 12
-FEATURE_EXTRACTOR = "resnet" # "resnet" # "efficientnet"
+FEATURE_EXTRACTOR = "efficientnet" # "resnet" # "efficientnet"
 
 print("############################## DATASET ##############################")
 
@@ -82,3 +82,4 @@ end_time = time.time()
 tps = (end_time - start_time) / test_dataset_items
 fps = 1 / (tps / SEQ_LEN)
 print(f"Durchschnittliche Klassifikationszeit: {tps:.6f} Sekunden pro Sample, FPS: {fps:.6f}")
+print(final_results)
