@@ -84,7 +84,7 @@ for i, c in enumerate(CLASS_LIST):
     print(f"  {c}: {test_dataset_classes[i]}x")
 
 print("Prefetching items...")
-train_dataset = train_dataset.map(df40_load_and_preprocess, num_parallel_calls=tf.data.AUTOTUNE).shuffle(int(float(train_dataset.cardinality()) * 0.025), reshuffle_each_iteration=True).batch(BATCH_SIZE)
+train_dataset = train_dataset.map(df40_load_and_preprocess, num_parallel_calls=tf.data.AUTOTUNE).shuffle(int(float(train_dataset.cardinality()) * 0.02), reshuffle_each_iteration=True).batch(BATCH_SIZE)
 test_dataset = test_dataset.map(df40_load_and_preprocess, num_parallel_calls=tf.data.AUTOTUNE).batch(BATCH_SIZE)
 train_dataset = train_dataset.prefetch(tf.data.AUTOTUNE)
 test_dataset = test_dataset.prefetch(tf.data.AUTOTUNE)
@@ -121,7 +121,7 @@ def create_model():
     ])
     model.compile(optimizer=model_optimizer, loss="categorical_crossentropy", metrics=[mt.CategoricalAccuracy(name="ca"), mt.F1Score(name="fs_weighted", average="weighted"), mt.F1Score(name="fs"), mt.Precision(name="p"), mt.Recall(name="r")])
     return model
-# 3562680
+
 model = create_model()
 
 # Model Checkpoint
