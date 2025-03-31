@@ -15,6 +15,7 @@ IO_PATH           = "./io"
 IMG_SIZE          = (224, 224, 3)
 SEQ_LEN           = 16
 BATCH_SIZE        = 4
+FEATURE_EXTRACTOR = "resnet"
 
 print("############################## DATASET ##############################")
 
@@ -62,15 +63,14 @@ print("############################## EVALUATION ##############################"
 
 print(tf.config.list_physical_devices("GPU"))
 
-for fe in ["resnet", "efficientnet"]:
-    model_path: pl.Path = pl.Path(IO_PATH).resolve() / f"model-{fe}-sl{SEQ_LEN:02d}-final.keras"
-    model = keras.saving.load_model(model_path, compile=False)
-    model.compile(optimizer=None, loss="categorical_crossentropy", metrics=[mt.CategoricalAccuracy(name="ca"), mt.F1Score(name="fs_weighted", average="weighted"), mt.F1Score(name="fs"), mt.Precision(name="p"), mt.Recall(name="r")])
-    model.summary()
+model_path: pl.Path = pl.Path(IO_PATH).resolve() / f"model-{FEATURE_EXTRACTOR}-sl{SEQ_LEN:02d}-final.keras"
+model = keras.saving.load_model(model_path, compile=False)
+model.compile(optimizer=None, loss="categorical_crossentropy", metrics=[mt.CategoricalAccuracy(name="ca"), mt.F1Score(name="fs_weighted", average="weighted"), mt.F1Score(name="fs"), mt.Precision(name="p"), mt.Recall(name="r")])
+model.summary()
 
-    start_time = time.time()
-    final_results = model.evaluate(test_dataset)
-    end_time = time.time()
-    tps = (end_time - start_time) / len(test_dataset)
-    fps = 1 / (tps / SEQ_LEN)
-    print(f"Durchschnittliche Klassifikationszeit: {tps:.6f} Sekunden pro Sample, FPS: {fps:.6f}")
+start_time = time.time()
+final_results = model.evaluate(test_dataset)
+end_time = time.time()
+tps = (end_time - start_time) / len(test_dataset)
+fps = 1 / (tps / SEQ_LEN)
+print(f"Durchschnittliche Klassifikationszeit: {tps:.6f} Sekunden pro Sample, FPS: {fps:.6f}")
