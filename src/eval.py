@@ -13,8 +13,8 @@ import time
 CLASS_LIST        = ["original", "face_swap", "face_reenact"]
 IO_PATH           = "./io"
 IMG_SIZE          = (224, 224, 3)
-SEQ_LEN           = 16
-BATCH_SIZE        = 4
+SEQ_LEN           = 8
+BATCH_SIZE        = 12
 FEATURE_EXTRACTOR = "efficientnet" # "resnet" # "efficientnet"
 
 print("############################## DATASET ##############################")
@@ -46,6 +46,11 @@ def df40_load_and_preprocess(path_sequence: list[str], label: int):
 
 print("Enumerating items...")
 test_sequences, test_labels = df40_list_labeled_items(pl.Path(IO_PATH).resolve() / "df40" / "test")
+
+test_data = list(zip(test_sequences, test_labels))
+random.shuffle(test_data)
+test_sequences, test_labels = zip(*test_data)
+test_sequences, test_labels = list(test_sequences), list(test_labels)
 
 print("Preprocessing items...")
 test_dataset = tf.data.Dataset.from_tensor_slices((test_sequences, test_labels))
