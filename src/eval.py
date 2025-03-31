@@ -64,7 +64,7 @@ print("############################## EVALUATION ##############################"
 print(tf.config.list_physical_devices("GPU"))
 
 model_path: pl.Path = pl.Path(IO_PATH).resolve() / f"model-{FEATURE_EXTRACTOR}-sl{SEQ_LEN:02d}-final.keras"
-model = keras.saving.load_model(model_path, compile=False)
+model = tf.keras.saving.load_model(model_path, compile=False)
 model.compile(optimizer=None, loss="categorical_crossentropy", metrics=[mt.CategoricalAccuracy(name="ca"), mt.F1Score(name="fs_weighted", average="weighted"), mt.F1Score(name="fs"), mt.Precision(name="p"), mt.Recall(name="r")])
 model.summary()
 
