@@ -255,18 +255,19 @@ Da im Rahmen dieser Arbeit keine neuen Komponenten für Netze entwickelt werden,
 Insgesamt wurden 6 Modellkonfigurationen für jeweils 9 Epochen trainiert (siehe Abs.~\ref{ssec:training}). 
 Mit den in Abs.~\ref{ssec:validation} aufgeführten Metriken ergeben sich die folgenden Zahlen zur Performance der Modelle:
 \begin{table}[!h]
+    \footnotesize
     \centering
     \caption{Auswertung der Klassifikationsergebnisse nach 9 Epochen Training}
-    \begin{tabularx}{\textwidth}{|X|c|c|c|c|c|c|c|c|}
+    \begin{tabularx}{\textwidth}{|X|c|c|c|c|c|c|c|c|c|}
         \hline
-        \multirow{2}{*}{\textbf{Modellkonfiguration}} & \multirow{2}{*}{\textbf{FPS}} & \multicolumn{3}{c|}{\textbf{Precision}} & \multicolumn{3}{c|}{\textbf{Recall}} & \multirow{2}{*}{\makecell{\textbf{F1-Score}\\(gewichtet)}} \\\cdashline{3-8}
-        & & \texttt{OR} & \texttt{FS} & \texttt{FR} & \texttt{OR} & \texttt{FS} & \texttt{FR} &  \\\hline\hline
-        \resnet-8 & 182 & 0.9248 & 0.9322 & 0.3927 & 0.9980 & 0.7717 & 0.5264 & 0.7476 (0.9090) \\\hline
-        \effnet-8 &  &  &  &  &  &  &  &  \\\hline
-        \resnet-12 &  &  &  &  &  &  &  &  \\\hline
-        \effnet-12 &  &  &  &  &  &  &  &  \\\hline
-        \resnet-16 &  &  &  &  &  &  &  &  \\\hline
-        \effnet-16 &  &  &  &  &  &  &  &  \\\hline
+        \multirow{2}{*}{\textbf{Modellkonfiguration}} & \multirow{2}{*}{\textbf{FPS}} & \multirow{2}{*}{\makecell{\textbf{cat.}\\\textbf{Accuracy}}} & \multicolumn{3}{c|}{\textbf{Precision}} & \multicolumn{3}{c|}{\textbf{Recall}} & \multirow{2}{*}{\makecell{\textbf{F1-Score}\\(gewichtet)}} \\\cdashline{4-9}
+        & & & \texttt{OR} & \texttt{FS} & \texttt{FR} & \texttt{OR} & \texttt{FS} & \texttt{FR} &  \\\hline\hline
+        \resnet-08 & 182 & 0.8829 & 0.9248 & 0.9322 & 0.3927 & 0.9980 & 0.7717 & 0.5264 & 0.7476 (0.9090) \\\hline
+        \effnet-08 & 208 & 0.8341 & 0.8589 & 0.9291 & 0.3603 & 0.9922 & 0.6930 & 0.5243 & 0.7093 (0.8670) \\\hline
+        \resnet-12 &  &  &  &  &  &  &  &  &  \\\hline
+        \effnet-12 &  &  &  &  &  &  &  &  &  \\\hline
+        \resnet-16 &  &  &  &  &  &  &  &  &  \\\hline
+        \effnet-16 &  &  &  &  &  &  &  &  &  \\\hline
     \end{tabularx}
     \label{tab:evaluation}
 \end{table}
