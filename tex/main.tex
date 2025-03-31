@@ -256,16 +256,16 @@ Mit den in Abs.~\ref{ssec:validation} aufgeführten Metriken ergeben sich die fo
 \begin{table}[!h]
     \centering
     \caption{Auswertung der Klassifikationsergebnisse nach 9 Epochen Training}
-    \begin{tabularx}{\textwidth}{|X||c|c|c||c|c|c||c|}
+    \begin{tabularx}{\textwidth}{|X|c|c|c|c|c|c|c|c|}
         \hline
-        \multirow{2}{*}{\textbf{Modellkonfiguration}} & \multicolumn{3}{c|}{\textbf{Precision}} & \multicolumn{3}{c||}{\textbf{Recall}} & \multirow{2}{*}{\makecell{\textbf{F1-Score}\\(gewichtet)}} \\\cdashline{2-7}
-        & \texttt{OR} & \texttt{FS} & \texttt{FR} & \texttt{OR} & \texttt{FS} & \texttt{FR} &  \\\hline\hline
-        \resnet-8 &  &  &  &  &  &  &  \\\hline
-        \effnet-8 &  &  &  &  &  &  &  \\\hline
-        \resnet-12 &  &  &  &  &  &  &  \\\hline
-        \effnet-12 &  &  &  &  &  &  &  \\\hline
-        \resnet-16 &  &  &  &  &  &  &  \\\hline
-        \effnet-16 &  &  &  &  &  &  &  \\\hline
+        \multirow{2}{*}{\textbf{Modellkonfiguration}} & \multirow{2}{*}{\textbf{FPS}} & \multicolumn{3}{c|}{\textbf{Precision}} & \multicolumn{3}{c|}{\textbf{Recall}} & \multirow{2}{*}{\makecell{\textbf{F1-Score}\\(gewichtet)}} \\\cdashline{3-8}
+        & & \texttt{OR} & \texttt{FS} & \texttt{FR} & \texttt{OR} & \texttt{FS} & \texttt{FR} &  \\\hline\hline
+        \resnet-8 &  &  &  &  &  &  &  &  \\\hline
+        \effnet-8 &  &  &  &  &  &  &  &  \\\hline
+        \resnet-12 &  &  &  &  &  &  &  &  \\\hline
+        \effnet-12 &  &  &  &  &  &  &  &  \\\hline
+        \resnet-16 &  &  &  &  &  &  &  &  \\\hline
+        \effnet-16 &  &  &  &  &  &  &  &  \\\hline
     \end{tabularx}
     \label{tab:evaluation}
 \end{table}
