@@ -83,7 +83,7 @@ metrics_list = [
     mt.Recall(name="r0", class_id=0),
     mt.Recall(name="r1", class_id=1), 
     mt.Recall(name="r2", class_id=2),
-    mt.Precision(name="r")
+    mt.Recall(name="r")
 ]
 
 model_path: pl.Path = pl.Path(IO_PATH).resolve() / f"model-{FEATURE_EXTRACTOR}-sl{SEQ_LEN:02d}-final.keras"
