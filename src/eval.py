@@ -1,22 +1,18 @@
 import collections
-import math
 import numpy as np
 import pathlib as pl
-import random
 import tensorflow as tf
 import tensorflow.keras.applications as ap
-import tensorflow.keras.callbacks as cb
-import tensorflow.keras.layers as ly
 import tensorflow.keras.metrics as mt
-import tensorflow.keras.regularizers as rg
 import time
 
 CLASS_LIST        = ["original", "face_swap", "face_reenact"]
 IO_PATH           = "./io"
 IMG_SIZE          = (224, 224, 3)
-SEQ_LEN           = 8
-BATCH_SIZE        = 12
-FEATURE_EXTRACTOR = "resnet" # "resnet" # "efficientnet"
+
+SEQ_LEN           = 12              # 8 / 12 / 16
+BATCH_SIZE        = 8               # 12 / 8 / 4
+FEATURE_EXTRACTOR = "resnet"        # resnet / efficientnet
 
 print("############################## DATASET ##############################")
 
@@ -47,11 +43,6 @@ def df40_load_and_preprocess(path_sequence: list[str], label: int):
 
 print("Enumerating items...")
 test_sequences, test_labels = df40_list_labeled_items(pl.Path(IO_PATH).resolve() / "df40" / "test")
-
-#test_data = list(zip(test_sequences, test_labels))
-#random.shuffle(test_data)
-#test_sequences, test_labels = zip(*test_data)
-#test_sequences, test_labels = list(test_sequences), list(test_labels)
 
 print("Preprocessing items...")
 test_dataset = tf.data.Dataset.from_tensor_slices((test_sequences, test_labels))
@@ -100,7 +91,7 @@ final_results = model.evaluate(test_dataset)
 end_time = time.time()
 tps = (end_time - start_time) / test_dataset_items
 fps = 1 / (tps / SEQ_LEN)
-print(f"Durchschnittliche Klassifikationszeit: {round(tps*1000)} ms pro Sample, FPS: {round(fps)}")
+print(f"Klassifikationszeit pro Sample: {round(tps*1000)} ms, FPS: {round(fps)}")
 for m in metrics_list:
     result = m.result()
     formatted_result = f"{result:.4f}" if tf.size(result) == 1 else result

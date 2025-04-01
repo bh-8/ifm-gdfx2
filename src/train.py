@@ -13,8 +13,11 @@ import tensorflow.keras.regularizers as rg
 CLASS_LIST        = ["original", "face_swap", "face_reenact"]
 IO_PATH           = "./io"
 IMG_SIZE          = (224, 224, 3)
-SEQ_LEN           = 16
-BATCH_SIZE        = 4
+
+SEQ_LEN           = 12              # 8 / 12 / 16
+BATCH_SIZE        = 8               # 12 / 8 / 4
+FEATURE_EXTRACTOR = "resnet"        # resnet / efficientnet
+
 EPOCHS            = 9
 EPOCHS_BASELINE   = 3
 EPOCHS_PATIENCE   = 6
@@ -22,7 +25,6 @@ LEARNING_RATE     = 1e-3 # 0.001
 LEARNING_RATE_MIN = 1e-5 # 0.00001
 WEIGHT_DECAY      = 3e-3 # 0.003
 DROPOUT           = 5e-1 # 0.5
-FEATURE_EXTRACTOR = "efficientnet" # efficientnet/resnet
 
 print("############################## DATASET ##############################")
 
@@ -55,14 +57,11 @@ print("Enumerating items...")
 train_sequences, train_labels = df40_list_labeled_items(pl.Path(IO_PATH + "/df40/train").resolve())
 test_sequences, test_labels = df40_list_labeled_items(pl.Path(IO_PATH + "/df40/test").resolve())
 
+# shuffle training data on path level
 train_data = list(zip(train_sequences, train_labels))
-test_data = list(zip(test_sequences, test_labels))
 random.shuffle(train_data)
-random.shuffle(test_data)
 train_sequences, train_labels = zip(*train_data)
-test_sequences, test_labels = zip(*test_data)
 train_sequences, train_labels = list(train_sequences), list(train_labels)
-test_sequences, test_labels = list(test_sequences), list(test_labels)
 
 print("Preprocessing items...")
 train_dataset = tf.data.Dataset.from_tensor_slices((train_sequences, train_labels))
@@ -93,9 +92,27 @@ print("############################## MODEL ##############################")
 
 print(tf.config.list_physical_devices("GPU"))
 
-# Adam-Optimizer (inkl. opt. Weight Decay/adapt. LR)
-#model_optimizer = tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE)
 model_optimizer = tf.keras.optimizers.AdamW(learning_rate=LEARNING_RATE, weight_decay=WEIGHT_DECAY)
+model_checkpoint = cb.ModelCheckpoint(filepath=IO_PATH + f"/model-{FEATURE_EXTRACTOR}-sl{SEQ_LEN:02d}-chckpnt-{{epoch:02d}}.keras", verbose=1)
+
+class FreezeBaselineCallback(cb.Callback):
+    def on_epoch_begin(self, epoch, logs=None):
+        model.get_layer("baseline").trainable = False
+        fe_layer = model.get_layer("baseline").layer
+
+        if epoch < EPOCHS_BASELINE:
+            unfreeze_layers: int = math.ceil(len(fe_layer.layers) / float(2 ** (epoch + 2)))
+            for layer in fe_layer.layers[-unfreeze_layers:]:
+                layer.trainable = True
+            new_lr = LEARNING_RATE / (10 * 2 ** epoch)
+            model_optimizer.learning_rate.assign(new_lr)
+            print(f"Epoch {epoch + 1}: unfreezed {unfreeze_layers}/{len(fe_layer.layers)} layers of baseline model, set learning rate to {new_lr}")
+        else:
+            new_lr = LEARNING_RATE / (2 ** epoch)
+            if new_lr < LEARNING_RATE_MIN:
+                new_lr = LEARNING_RATE_MIN
+            model_optimizer.learning_rate.assign(new_lr)
+            print(f"Epoch {epoch + 1}: freezed all layers of baseline model, set learning rate to {new_lr}")
 
 def create_feature_extractor():
     feature_extractor = None
@@ -123,33 +140,6 @@ def create_model():
     return model
 
 model = create_model()
-
-# Model Checkpoint
-model_checkpoint = cb.ModelCheckpoint(filepath=IO_PATH + f"/model-{FEATURE_EXTRACTOR}-sl{SEQ_LEN:02d}-chckpnt-{{epoch:02d}}.keras", verbose=1)
-
-# Early-Stopping (Training, bis Modell sich nicht weiter verbessert) KEIN VALIDATION LOSS! ZU UNGENAU BZW. ZU ZEITAUFWÄNDIG
-early_stopping = cb.EarlyStopping(monitor="val_loss", patience=EPOCHS_PATIENCE, restore_best_weights=True)
-
-# Custom Callback to freeze baseline weights and update learning rate during training
-class FreezeBaselineCallback(cb.Callback):
-    def on_epoch_begin(self, epoch, logs=None):
-        model.get_layer("baseline").trainable = False
-        fe_layer = model.get_layer("baseline").layer
-
-        if epoch < EPOCHS_BASELINE:
-            unfreeze_layers: int = math.ceil(len(fe_layer.layers) / float(2 ** (epoch + 2)))
-            for layer in fe_layer.layers[-unfreeze_layers:]:
-                layer.trainable = True
-            new_lr = LEARNING_RATE / (10 * 2 ** epoch)
-            model_optimizer.learning_rate.assign(new_lr)
-            print(f"Epoch {epoch + 1}: unfreezed {unfreeze_layers}/{len(fe_layer.layers)} layers of baseline model, set learning rate to {new_lr}")
-        else:
-            new_lr = LEARNING_RATE / (2 ** epoch)
-            if new_lr < LEARNING_RATE_MIN:
-                new_lr = LEARNING_RATE_MIN
-            model_optimizer.learning_rate.assign(new_lr)
-            print(f"Epoch {epoch + 1}: freezed all layers of baseline model, set learning rate to {new_lr}")
-
 model.summary()
 
 print("############################## TRAINING ##############################")
