@@ -104,4 +104,4 @@ print(f"Durchschnittliche Klassifikationszeit: {round(tps*1000)} ms pro Sample, 
 for m in metrics_list:
     result = m.result()
     formatted_result = f"{result:.4f}" if tf.size(result) == 1 else result
-    print(f"    {m.name} = {formatted_result} ({type(result)})")
+    print(f"    {m.name} = {formatted_result}")
