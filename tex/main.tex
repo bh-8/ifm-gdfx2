@@ -4,7 +4,7 @@
 \usepackage[german]{babel}
 \usepackage{caption}
 \usepackage{csquotes}
-\usepackage{geometry}
+\usepackage[a4paper,left=30mm,right=30mm,top=30mm,bottom=30mm]{geometry}
 \usepackage{graphicx}
 \usepackage{hyperref}
 \usepackage{listings}
@@ -15,9 +15,12 @@
 \usepackage{scrextend}
 \usepackage{tabularx}
 \usepackage{titlesec}
+\usepackage{titling}
 \usepackage{arydshln}
 \usepackage{xspace}
 \usepackage{xurl}
+
+\setlength{\droptitle}{-3em}
 
 \titlespacing*{\section}
 {0pt}{1ex plus 1ex minus .2ex}{0.3ex plus .2ex}
@@ -25,13 +28,12 @@
 {0pt}{1ex plus 1ex minus .2ex}{0.3ex plus .2ex}
 
 \deffootnote{0em}{1.6em}{\thefootnotemark.\enskip}
-\setlength{\tabcolsep}{0.1em}
 \def\arraystretch{1.2}
 
 \expandafter\def\expandafter\normalsize\expandafter{%
     \normalsize%
-    \setlength\abovedisplayskip{0pt}%
-    \setlength\belowdisplayskip{0pt}%
+    \setlength\abovedisplayskip{3pt}%
+    \setlength\belowdisplayskip{3pt}%
     %\setlength\abovedisplayshortskip{-8pt}%
     %\setlength\belowdisplayshortskip{2pt}%
 }
@@ -45,6 +47,7 @@
 
 \title{Generalizable Deepfake Detection}
 \author{Bernhard Birnbaum}
+\date{31. März 2025}
 
 \begin{document}
 
@@ -107,6 +110,7 @@ Der Split in Trainings- und Testdaten ist bereits vom Datensatz vorgegeben und w
 \textbf{Einlesen des Datensatzes}:\\
 In Listing~\ref{apx:lst.df40} im Anhang ist die Ordnerstruktur des Datensatzes im \texttt{io/}-Verzeichnis dargestellt.
 \begin{enumerate}
+    \setlength{\itemsep}{0pt}
     \item\textbf{Durchsuchen der Ordnerstruktur}: Zunächst wird die Ordnerstruktur für jede Klasse nach Elementen durchsucht. Dabei werden die einzelnen \texttt{*.png}-Dateien einer Sequenz anhand ihres Dateinamens sortiert, um die Reihenfolge sicherzustellen. Beim Laden der Elemente wird außerdem die zuvor beschriebene Sequenzlängen-Filterung angewandt.
     \item\textbf{Mischen}: Alle erfassten Items werden anschließend initial auf Pfad-Ebene sortiert, damit eine ausgeglichene Reihenfolge zur Bildung von Batches vorliegt. Außerdem wird der Trainingsdatensatz vor jeder Epoche erneut durchmischt.
     \item\textbf{Preprocessing-Funktion}: Die einzelnen Bilder der Sequenzen (\texttt{256x256x3}) werden decodiert und in Tensoren der Form \imgsize umgewandelt (\textit{resizing}). Bei \resnet muss zudem eine weitere Preprocessing-Funktion verwendet werden, damit das Eingabeformat korrekt ist. Danach werden die Frames entlang der zeitlichen Achse gestapelt (\textit{tensor stacking}). Auf die Labels wird zudem eine One-Hot-Kodierung angewandt.
@@ -116,6 +120,7 @@ In Listing~\ref{apx:lst.df40} im Anhang ist die Ordnerstruktur des Datensatzes i
 Im folgenden wird der grundsätzliche Aufbau des entwickelten Modells beschrieben, mit welchem die Klassifikation durchgeführt wird.
 Die einzelnen Schichten sind dabei folgendermaßen charakterisiert:
 \begin{enumerate}
+    \setlength{\itemsep}{0pt}
     \item\textbf{Input-Layer}:
         In der Eingabeschicht wird die Form des Eingabetensors definiert.
         Diese ergibt sich zum einen aus den Abmessungen eines einzelnen Frames \imgsize, zum anderen aus der Länge der Sequenz, mit der das Modell arbeiten soll.
@@ -234,6 +239,7 @@ Das in dieser Untersuchung entwickelte Modell (siehe Abs.~\ref{ssec:model}) wurd
 Als Paket- und Umgebungsmanagement wurde MiniForge mit Mamba verwendet.
 Die folgenden Tools bzw. Versionen müssen in der virtuellen Umgebung installiert sein:
 \begin{itemize}
+    \setlength{\itemsep}{0pt}
     \item Python 3.12.9
     \item tensorflow 2.18.0
     \item numpy 2.0.2
@@ -255,6 +261,7 @@ Da im Rahmen dieser Arbeit keine neuen Komponenten für Netze entwickelt werden,
 Insgesamt wurden 6 Modellkonfigurationen für jeweils 9 Epochen trainiert (siehe Abs.~\ref{ssec:training}). 
 Mit den in Abs.~\ref{ssec:validation} aufgeführten Metriken ergeben sich die folgenden Zahlen zur Performance der Modelle:
 \begin{table}[!h]
+    \setlength{\tabcolsep}{0.1em}
     \scriptsize
     \centering
     \caption{Auswertung der Klassifikationsergebnisse nach 9 Epochen Training}
