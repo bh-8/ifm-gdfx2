@@ -48,10 +48,10 @@ def df40_load_and_preprocess(path_sequence: list[str], label: int):
 print("Enumerating items...")
 test_sequences, test_labels = df40_list_labeled_items(pl.Path(IO_PATH).resolve() / "df40" / "test")
 
-test_data = list(zip(test_sequences, test_labels))
-random.shuffle(test_data)
-test_sequences, test_labels = zip(*test_data)
-test_sequences, test_labels = list(test_sequences), list(test_labels)
+#test_data = list(zip(test_sequences, test_labels))
+#random.shuffle(test_data)
+#test_sequences, test_labels = zip(*test_data)
+#test_sequences, test_labels = list(test_sequences), list(test_labels)
 
 print("Preprocessing items...")
 test_dataset = tf.data.Dataset.from_tensor_slices((test_sequences, test_labels))
@@ -79,9 +79,11 @@ metrics_list = [
     mt.Precision(name="p0", class_id=0),
     mt.Precision(name="p1", class_id=1),
     mt.Precision(name="p2", class_id=2),
+    mt.Precision(name="p"),
     mt.Recall(name="r0", class_id=0),
     mt.Recall(name="r1", class_id=1), 
-    mt.Recall(name="r2", class_id=2)
+    mt.Recall(name="r2", class_id=2),
+    mt.Precision(name="r")
 ]
 
 model_path: pl.Path = pl.Path(IO_PATH).resolve() / f"model-{FEATURE_EXTRACTOR}-sl{SEQ_LEN:02d}-final.keras"
@@ -100,7 +102,8 @@ tps = (end_time - start_time) / test_dataset_items
 fps = 1 / (tps / SEQ_LEN)
 print(f"Durchschnittliche Klassifikationszeit: {round(tps*1000)} ms pro Sample, FPS: {fps:.2f}")
 for m in metrics_list:
-    if isinstance(m.result(), float):
-        print(f"    {m.name} = {m.result():.2f}")
-    else:
+    try:
+        print(f"    {m.name} = {m.result():.4f}")
+    except e as Exception:
         print(f"    {m.name} = {m.result()}")
+#0.8520 0.6001
