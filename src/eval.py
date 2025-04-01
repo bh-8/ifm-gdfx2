@@ -105,4 +105,3 @@ for m in metrics_list:
     result = m.result()
     formatted_result = f"{result:.4f}" if tf.size(result) == 1 else result
     print(f"    {m.name} = {formatted_result} ({type(result)})")
-#0.8520 0.6001
