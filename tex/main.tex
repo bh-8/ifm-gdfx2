@@ -262,25 +262,36 @@ Mit den in Abs.~\ref{ssec:validation} aufgeführten Metriken ergeben sich die fo
         \hline
         \multirow{2}{*}{\makecell[l]{\textbf{Modellkonfiguration}\\(FE-Sequenzlänge)}} & \multirow{2}{*}{\makecell{\textbf{Zeit}\\pro Item}} & \multicolumn{4}{c|}{\textbf{Precision}} & \multicolumn{4}{c|}{\textbf{Recall}} & \multicolumn{4}{c|}{\textbf{F1-Score}} \\\cdashline{3-14}
         & & \texttt{OR} & \texttt{FS} & \texttt{FR} & micro & \texttt{OR} & \texttt{FS} & \texttt{FR} & micro & \texttt{OR} & \texttt{FS} & \texttt{FR} & weighted \\\hline\hline
-        \resnet-08 &  $\text{ms}$ &  &  &  &  &  &  &  &  &  &  &  &  \\\hline
-        \resnet-12 &  $\text{ms}$ &  &  &  &  &  &  &  &  &  &  &  &  \\\hline
-        \resnet-16 &  $\text{ms}$ &  &  &  &  &  &  &  &  &  &  &  &  \\\hline
-        \effnet-08 &  $\text{ms}$ &  &  &  &  &  &  &  &  &  &  &  &  \\\hline
-        \effnet-12 &  $\text{ms}$ &  &  &  &  &  &  &  &  &  &  &  &  \\\hline
-        \effnet-16 &  $\text{ms}$ &  &  &  &  &  &  &  &  &  &  &  &  \\\hline
+        \resnet-08 & 44 $\text{ms}$ & 0.8449 & 0.9160 & 0.8853 & 0.8938 & 0.9980 & 0.8263 & 0.9318 & 0.8929 & 0.9126 & 0.8687 & 0.9082 & 0.8924 \\\hline
+        \resnet-12 & 67 $\text{ms}$ & 0.8310 & 0.9292 & 0.8904 & 0.9003 & 0.9990 & 0.8280 & 0.9417 & 0.8990 & 0.9032 & 0.8759 & 0.9155 & 0.8988 \\\hline
+        \resnet-16 & 103 $\text{ms}$ & 0.8573 & 0.9282 & 0.8833 & 0.8977 & 0.9980 & 0.8225 & 0.9412 & 0.8964 & 0.9189 & 0.8725 & 0.9114 & 0.8961 \\\hline
+        \effnet-08 & 38 $\text{ms}$ & 0.7099 & 0.9049 & 0.8433 & 0.8531 & 0.9920 & 0.7422 & 0.9150 & 0.8531 & 0.8230 & 0.8174 & 0.8782 & 0.8505 \\\hline
+        \effnet-12 & 59 $\text{ms}$ & 0.7235 & 0.8893 & 0.8759 & 0.8689 & 0.9820 & 0.8020 & 0.9002 & 0.8651 & 0.8263 & 0.8437 & 0.8880 & 0.8665 \\\hline
+        \effnet-16 & 90 $\text{ms}$ & 0.6801 & 0.9071 & 0.8484 & 0.8540 & 0.9830 & 0.7455 & 0.9137 & 0.8495 & 0.7958 & 0.8197 & 0.8799 & 0.8507 \\\hline
     \end{tabularx}
     \label{tab:evaluation}
 \end{table}
-\begin{itemize}
-    \item \textbf{ToDo}: Metriken und Detektionszeiten erfassen und eintragen
-    \item \textbf{ToDo}: Auswertung/Bewertung
-\end{itemize}
+\\
+Zunächst kann festgestellt werden, dass die \resnet-Modelle in allen Konfigurationen besser abschneiden als \effnet, was vermutlich auf die höhere Parameteranzahl von \resnet zurückzuführen ist, was sich dementsprechend auch in der Detektionszeit wiederspiegelt.
+Innerhalb derselben Baseline-Architektur steigen die durchschnittlichen Werte für Precision, Recall und F1-Score leicht mit der Sequenzlänge, wobei speziell die Modelle mit einer Länge von 12 geringfügig besser abschneiden.
+\\
+Die besten Precision-Werte werden in der Klasse \texttt{FS} mit \resnet erreicht, hingegen liefert \effnet besonders bei der Klasse \texttt{OR} relativ viele False-Positives.
+Dies deckt sich mit den Recall-Werten; die besten Werte wurden von \resnet in der Klasse \texttt{OR} erzielt, die meisten False-Negatives treten allerdings bei \effnet in der Klasse \texttt{FS} auf.
+Das bedeutet, dass \effnet bei der Trennung der Klassen \texttt{OR} und \texttt{FS} mehr Probleme hat als \resnet, wodurch zu viele \texttt{OR}-Instanzen fälschlicherweise zugeordnet und einige relevante \texttt{FS}-Items zu übersehen wurden.
+\\
+Die etwas niedrigeren F1-Scores bei \texttt{FS} deuten darauf hin, dass \resnet bei dieser Klasse mehr Probleme hat, eine optimale Balance zwischen Precision und Recall zu erreichen.
+Der geringfügig höheren F1-Scores bei \texttt{FR} legen nahe, dass \effnet vor allem bei dieser Klasse eine gute Balance zwischen Precision und Recall erzielt.
+\\
+Zusammenfassend kann gesagt werden, dass die Modelle insgesamt recht dicht beieinander liegen.
+Die besten Werte konnten für das \resnet-Modell mit einer Sequenzlänge von 12 erreicht werden (\resnet-12), was auf einen guten Trade-Off zwischen Performance und Rechenleistung hindeutet.
 
 \section{Zusammenfassung}
 \subsection{Fazit}
-\begin{itemize}
-    \item \textbf{ToDo}: Fazit \dots
-\end{itemize}
+Im Rahmen dieser Arbeit wurde eine Architektur zur Klassifikation von DeepFake-Bildsequenzen entwickelt.
+Die Modelle bestehen aus einem Merkmalsextraktor (\resnet oder \effnet) als Baseline-Klassifikator mit einem dahinterliegenden BiLSTM und unterscheiden die Klassen \textit{original}, \textit{face-swap} und \textit{face-reenactment}.
+Dabei konnte gezeigt werden, dass mit \resnet insgesamt bessere Ergebnisse erzielt werden können.
+Obwohl die Leistung aller Modelle mit zunehmender Sequenzlänge leicht steigt, scheint bei Sequenzen der Länge 12 ein Sweet-Spot bezogen auf die verwendeten Trainingsparameter erreicht zu sein.
+Die \resnet-Modelle haben zwar Schwierigkeiten mit der \texttt{FS}-Klasse, das größte Problem der \effnet-Modelle bleibt aber die Trennung der Klassen \texttt{OR} und \texttt{FS}.
 
 \subsection{Ausblick für zukünftige Arbeiten}
 \textbf{Weitere Klassen}:\\
@@ -310,7 +321,6 @@ Zu guter Letzt verarbeiten die aktuell verwendeten Merkmalsextraktoren \resnet u
 Da die Bilder im DF40-Datensatz eine Größe von \texttt{256x256x3} haben, gehen durch die \textit{resizing}-Operation einige Informationen verloren.
 Durch die Verwendung gesteigerter Netztiefen und -breiten könnten die Ergebnisse eventuell weiter verbessert werden.
 
-\newpage
 \bibliographystyle{plain}
 \bibliography{refs}
 
