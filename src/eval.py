@@ -95,4 +95,4 @@ tps = (end_time - start_time) / test_dataset_items
 fps = 1 / (tps / SEQ_LEN)
 print(f"Durchschnittliche Klassifikationszeit: {round(tps*1000)} ms pro Sample, FPS: {fps:.2f}")
 for m in metrics_list:
-    print(f"    {m.name} = {m.result():.4f}")
+    print(f"    {m.name} = {m.result()}")
