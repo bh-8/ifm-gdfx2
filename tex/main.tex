@@ -258,16 +258,16 @@ Mit den in Abs.~\ref{ssec:validation} aufgeführten Metriken ergeben sich die fo
     \scriptsize
     \centering
     \caption{Auswertung der Klassifikationsergebnisse nach 9 Epochen Training}
-    \begin{tabularx}{\textwidth}{|X|c|c|c|c|c|c|c|c|}
+    \begin{tabularx}{\textwidth}{|X|c|c|c|c|c|c|c|c|c|c|c|c|c|}
         \hline
-        \multirow{2}{*}{\makecell[l]{\textbf{Modellkonfiguration}\\(Merkmalsextraktor, Sequenzlänge)}} & \multirow{2}{*}{\makecell{\textbf{Zeit}\\pro Item}} & \multicolumn{3}{c|}{\textbf{Precision}} & \multicolumn{3}{c|}{\textbf{Recall}} & \multirow{2}{*}{\makecell{\textbf{F1-Score}\\(gewichtet)}} \\\cdashline{3-8}
-        & & \texttt{OR} & \texttt{FS} & \texttt{FR} & \texttt{OR} & \texttt{FS} & \texttt{FR} &  \\\hline\hline
-        \resnet-08 &  $\text{ms}$ &  &  &  &  &  &  &  () \\\hline
-        \resnet-12 &  $\text{ms}$ &  &  &  &  &  &  &  () \\\hline
-        \resnet-16 &  $\text{ms}$ &  &  &  &  &  &  &  () \\\hline
-        \effnet-08 &  $\text{ms}$ &  &  &  &  &  &  &  () \\\hline
-        \effnet-12 &  $\text{ms}$ &  &  &  &  &  &  &  () \\\hline
-        \effnet-16 &  $\text{ms}$ &  &  &  &  &  &  &  () \\\hline
+        \multirow{2}{*}{\makecell[l]{\textbf{Modellkonfiguration}\\(Merkmalsextraktor, Sequenzlänge)}} & \multirow{2}{*}{\makecell{\textbf{Zeit}\\pro Item}} & \multicolumn{4}{c|}{\textbf{Precision}} & \multicolumn{4}{c|}{\textbf{Recall}} & \multicolumn{4}{c|}{\textbf{F1-Score}} \\\cdashline{3-14}
+        & & \texttt{OR} & \texttt{FS} & \texttt{FR} & micro & \texttt{OR} & \texttt{FS} & \texttt{FR} & micro & \texttt{OR} & \texttt{FS} & \texttt{FR} & weighted \\\hline\hline
+        \resnet-08 &  $\text{ms}$ &  &  &  &  &  &  &  &  &  &  &  &  \\\hline
+        \resnet-12 &  $\text{ms}$ &  &  &  &  &  &  &  &  &  &  &  &  \\\hline
+        \resnet-16 &  $\text{ms}$ &  &  &  &  &  &  &  &  &  &  &  &  \\\hline
+        \effnet-08 &  $\text{ms}$ &  &  &  &  &  &  &  &  &  &  &  &  \\\hline
+        \effnet-12 &  $\text{ms}$ &  &  &  &  &  &  &  &  &  &  &  &  \\\hline
+        \effnet-16 &  $\text{ms}$ &  &  &  &  &  &  &  &  &  &  &  &  \\\hline
     \end{tabularx}
     \label{tab:evaluation}
 \end{table}

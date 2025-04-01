@@ -102,8 +102,7 @@ tps = (end_time - start_time) / test_dataset_items
 fps = 1 / (tps / SEQ_LEN)
 print(f"Durchschnittliche Klassifikationszeit: {round(tps*1000)} ms pro Sample, FPS: {fps:.2f}")
 for m in metrics_list:
-    try:
-        print(f"    {m.name} = {m.result():.4f}")
-    except e as Exception:
-        print(f"    {m.name} = {m.result()}")
+    result = m.result()
+    formatted_result = f"{result:.4f}" if isinstance(result, (int, float, np.number)) else result
+    print(f"    {m.name} = {formatted_result}")
 #0.8520 0.6001
