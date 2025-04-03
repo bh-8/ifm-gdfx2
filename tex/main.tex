@@ -2,6 +2,8 @@
 
 \usepackage{amsmath}
 \usepackage[german]{babel}
+\usepackage[backend=biber,style=numeric]{biblatex}
+\usepackage{bookmark}
 \usepackage{caption}
 \usepackage{csquotes}
 \usepackage[a4paper,left=30mm,right=30mm,top=30mm,bottom=30mm]{geometry}
@@ -19,6 +21,8 @@
 \usepackage{arydshln}
 \usepackage{xspace}
 \usepackage{xurl}
+
+\addbibresource{refs.bib}
 
 \setlength{\droptitle}{-3em}
 
@@ -71,7 +75,7 @@ Die während dieser Untersuchung erzeugten Modelle nutzen \textit{convolutional 
 Beide Architekturen sind besonders gut für die Klassifikation von Bildern geeignet und erzielen dabei State-of-the-Art-Ergebnisse, was sie zu gängigen Merkmalsextraktoren macht.
 \resnet~\cite{resnet} nutzt sogenannte \textit{residual connections} bzw. \textit{skip connections}, wodurch die Eingabedaten eine oder mehrere Schichten im Netzwerk überspringen können (wirkt ebenfalls \textit{vanishing gradients problem} entgegen).
 %\footnote{Exploring ResNet50: An In-Depth Look at the Model Architecture and Code Implementation, \url{https://medium.com/@nitishkundu1993/exploring-resnet50-an-in-depth-look-at-the-model-architecture-and-code-implementation-d8d8fa67e46f}}
-\effnet~\cite{efficientnet} hingegen versucht, die Skalierung von Netzen in Tiefe, Breite und Auflösung zu optimieren (\textit{compound model scaling}), was zu einer deutlichen Verringerung der Anzahl von Parametern führt und dadurch eine besseren Performance bei gleicher Eingabegröße \imgsize ermöglicht.
+\effnet~\cite{efficientnet} hingegen versucht, die Skalierung von Netzen in Tiefe, Breite und Auflösung zu optimieren (\textit{compound model scaling}), was zu einer deutlichen Verringerung der Anzahl von Parametern führt und dadurch eine bessere Performance bei gleicher Eingabegröße \imgsize ermöglicht.
 %\footnote{Understanding EfficientNet - The most powerful CNN architecture, \url{https://arjun-sarkar786.medium.com/understanding-efficientnet-the-most-powerful-cnn-architecture-eaeb40386fad}}
 \\[0.5em]
 \textbf{Geeigneter Datensatz}:\\
@@ -90,7 +94,7 @@ Deshalb werden alle Sequenzen entweder zugeschnitten (sollten sie zu lang sein) 
 Alternativ könnten zu kurze Sequenzen auch mit Padding aufgefüllt werden; da der Datensatz allerdings groß genug ist und nur wenige Sequenzen betroffen sind, wurde darauf verzichtet.
 \\[0.5em]
 \textbf{Gewichtung der Klassen}:\\
-Da die Anzahl von Instanzen pro Klasse im Datensatz nicht gut balanciert sind, werden Klassengewichte (\textit{class weights}) verwendet, um ein ausgeglichenes Training zu ermöglichen.
+Da die Anzahl von Instanzen pro Klasse im Datensatz nicht gut balanciert ist, werden Klassengewichte (\textit{class weights}) verwendet, um ein ausgeglichenes Training zu ermöglichen.
 Desweiteren hängen die tatsächlichen Elementzahlen von der verwendeten Sequenzlänge ab, wie in Tabelle~\ref{tab:df40} dargestellt.
 Der Split in Trainings- und Testdaten ist bereits vom Datensatz vorgegeben und wird entsprechend übernommen.
 \begin{table}[!h]
@@ -113,12 +117,11 @@ In Listing~\ref{apx:lst.df40} im Anhang ist die Ordnerstruktur des Datensatzes i
     \setlength{\itemsep}{0pt}
     \item\textbf{Durchsuchen der Ordnerstruktur}: Zunächst wird die Ordnerstruktur für jede Klasse nach Elementen durchsucht. Dabei werden die einzelnen \texttt{*.png}-Dateien einer Sequenz anhand ihres Dateinamens sortiert, um die Reihenfolge sicherzustellen. Beim Laden der Elemente wird außerdem die zuvor beschriebene Sequenzlängen-Filterung angewandt.
     \item\textbf{Mischen}: Alle erfassten Items werden anschließend initial auf Pfad-Ebene sortiert, damit eine ausgeglichene Reihenfolge zur Bildung von Batches vorliegt. Außerdem wird der Trainingsdatensatz vor jeder Epoche erneut durchmischt.
-    \item\textbf{Preprocessing-Funktion}: Die einzelnen Bilder der Sequenzen (\texttt{256x256x3}) werden decodiert und in Tensoren der Form \imgsize umgewandelt (\textit{resizing}). Bei \resnet muss zudem eine weitere Preprocessing-Funktion verwendet werden, damit das Eingabeformat korrekt ist. Danach werden die Frames entlang der zeitlichen Achse gestapelt (\textit{tensor stacking}). Auf die Labels wird zudem eine One-Hot-Kodierung angewandt.
+    \item\textbf{Preprocessing-Funktion}: Die einzelnen Bilder der Sequenzen (\texttt{256x256x3}) werden decodiert und in Tensoren der Form \imgsize umgewandelt (\textit{resizing}). Bei \resnet muss zudem eine weitere Preprocessing-Funktion\footnote{ResNet and ResNetV2, \url{https://keras.io/api/applications/resnet/\#resnet50-function}} verwendet werden, damit das Eingabeformat korrekt ist. Danach werden die Frames entlang der zeitlichen Achse gestapelt (\textit{tensor stacking}). Auf die Labels wird zudem eine One-Hot-Kodierung angewandt.
 \end{enumerate}
 
 \subsection{Aufbau des Modells}\label{ssec:model}
-Im folgenden wird der grundsätzliche Aufbau des entwickelten Modells beschrieben, mit welchem die Klassifikation durchgeführt wird.
-Die einzelnen Schichten sind dabei folgendermaßen charakterisiert:
+Im folgenden wird der grundsätzliche Aufbau des entwickelten Modells zur Klassifikation beschrieben sowie die einzelnen Schichten charakterisiert.
 \begin{enumerate}
     \setlength{\itemsep}{0pt}
     \item\textbf{Input-Layer}:
@@ -137,19 +140,18 @@ Die einzelnen Schichten sind dabei folgendermaßen charakterisiert:
         Die Sequenz von Feature-Maps wird in der nächsten Schicht mit einem LSTM verarbeitet.
         Da das LSTM aus 256 Neuronen besteht und mit Hilfe des Bidirectional-Wrappers in beide Richtungen arbeitet, können insgesamt 512 Merkmalsdimensionenen erfasst werden.
         Desweiteren werden mehrere Maßnahmen gegen Overfitting in das Modell etabliert:
-        Zum einen wird auf die Eingaben und rekurrenten Verbindungen der LSTM-Zellen ein Dropout eingeführt, zum anderen wird auf die Gewichte der Eingangsverbindungen und rekurrenten Verbindungen eine L2-Regularisierung angewandt.
-        Die Ausgabe des BiLSTM enthält eine verdichtete Darstellung der gesamten Bildsequenz, einschließlich relevanter zeitlicher Abhängigkeiten. 
+        Zum einen wird auf die Eingaben und rekurrenten Verbindungen der LSTM-Zellen ein Dropout von 0.5 eingeführt, zum anderen wird auf die Gewichte der Eingangsverbindungen und rekurrenten Verbindungen eine L2-Regularisierung von 0.00003 angewandt.
+        Die Ausgabe des BiLSTM enthält somit eine verdichtete Darstellung der gesamten Bildsequenz, einschließlich relevanter zeitlicher Abhängigkeiten. 
         \\\textbf{Beispiel} für valide Form einer Ausgabe: \texttt{(512)}
     \item\textbf{Dropout-Layer}:
-        Nach der Sequenzverarbeitung wird eine weitere Dropout-Schicht auf die gesamte Ausgabe des BiLSTMs angewandt.
+        Nach der Sequenzverarbeitung wird eine weitere Dropout-Schicht der Stärke 0.25 auf die gesamte Ausgabe des BiLSTMs angewandt.
     \item\textbf{Dense-Layer}:
-        In einer abschließenden vollständig verbundenen Schicht werden die vom BiLSTM extrahierten Merkmale in die Klassifikationswerte umgewandelt.
-        Dabei werden besonders große Gewichte bestraft, indem eine weitere L2-Regularisierung zum Einsatz kommt.
-        Für jede Klasse gibt es ein Neuron in der Ausgabeschicht.
-        Als Aktivierungsfunktion wird \textit{softmax} genutzt, welche die Rohwerte in Wahrscheinlichkeiten für die Klassen umwandelt, sodass die Summe über alle Neurone der Ausgabe 1 ergibt.
+        In einer abschließenden vollständig verbundenen Schicht werden die vom BiLSTM extrahierten Merkmale in die Wahrscheinlichkeiten für die einzelnen Klassen umgewandelt, wobei es für jede Klasse ein Neuron in der Ausgabeschicht gibt.
+        Dabei werden besonders große Gewichte bestraft, indem eine weitere L2-Regularisierung von 0.003 zum Einsatz kommt.
+        Als Aktivierungsfunktion wird \textit{softmax} genutzt, welche die Rohwerte in Wahrscheinlichkeiten für die Klassen umwandelt (Summe über alle Ausgabeneuronen ist 1).
         \\\textbf{Beispiel} für valide Form einer Ausgabe: \texttt{(3)}
 \end{enumerate}
-In Abbildung~\ref{fig:model} ist der Aufbau des Modell schematisch dargestellt.
+In Abbildung~\ref{fig:model} ist der Aufbau des Modells schematisch dargestellt.
 \begin{figure}[!h]
     \centering
     \includegraphics[width=\textwidth]{model.pdf}
@@ -163,11 +165,11 @@ Im folgenden werden der Ablauf sowie die Parameter des Trainings erläutert.
 \textbf{Trainingskonfigurationen}:\\
 Insgesamt sollen 6 verschiedene Konfigurationen der Modellarchitektur trainiert werden.
 Dabei werden zum einen zwei verschiedene Merkmalsextraktoren als Baseline-Modell getestet (\resnet und \effnet), zum anderen wird die zu klassifizierende Sequenzlänge variiert (8 Frames, 12 Frames, 16 Frames).
-Um variierenden den Speicherbedarf durch die verschiedenen Sequenzlängen auszugleichen, wird die Batch-Size entsprechend angepasst (8 Frames $\rightarrow$ 12er Batches, 12 Frames $\rightarrow$ 8er Batches, 16 Frames $\rightarrow$ 4er Batches).
+Um den variierenden Speicherbedarf durch die verschiedenen Sequenzlängen auszugleichen, wird die Batch-Size entsprechend angepasst (8 Frames $\rightarrow$ 12er Batches, 12 Frames $\rightarrow$ 8er Batches, 16 Frames $\rightarrow$ 4er Batches).
 Zur besseren Vergleichbarkeit der Modelle wurde auf \textit{early stopping} verzichtet und alle Konfigurationen werden für exakt 9 Epochen trainiert.
 \\[0.5em]
 \textbf{Optimierer}:\\
-Zum Trainieren wird der Optimizer AdamW verwendet, eine um Weight-Decay erweiterte Variante des Adam-Optimizers (Adaptive Moment Estimation mit L2-Regularisierung).
+Zum Trainieren wird der Optimizer AdamW verwendet, eine um Gewichtszerfall (\textit{weight decay}) erweiterte Variante des Adam-Optimizers (\textit{adaptive moment estimation} mit L2-Regularisierung).
 AdamW verwaltet für jede Gewichtskomponente eine eigene Lernrate, die dynamisch angepasst wird, wodurch auf einen zusätzlichen LR-Scheduler verzichtet werden kann.
 \\[0.5em]
 \textbf{Verlustfunktion}:\\
@@ -176,8 +178,8 @@ Als zu minimierende Verlustfunktion wird \textit{categorical cross-entropy loss}
     $\displaystyle L=-\sum_{i=1}^Cy_i\log(\hat y_i)$ mit Anzahl Klassen $C$, Grundwahrheit $y_i$ und Vorhersage $\hat y_i$
 \end{center}
 \textbf{Merkmalsextraktoren}:\\
-Dem ausgewählten Merkmalsextraktor (\resnet bzw. \effnet) werden initial vortrainierte Gewichte via \texttt{imagenet}~\footnote{ImageNet, \url{https://www.image-net.org/}} zugewiesen.
-In den ersten 3 Epochen des Trainings wird er einem Fine-Tuning unterzogen.
+Dem ausgewählten Merkmalsextraktor (\resnet bzw. \effnet) werden initial vortrainierte Gewichte via \texttt{imagenet}\footnote{ImageNet, \url{https://www.image-net.org/}} zugewiesen.
+Desweiteren wird in den ersten 3 Epochen des Trainings ein Fine-Tuning der Gewichte durchgeführt.
 Die Anzahl von Schichten, deren Gewichte für das Training freigegeben werden sollen, wird mit folgender Formel berechnet:
 \[
     u_i= 
@@ -198,7 +200,7 @@ Die Größe der Lernrate wird basierend auf $\lambda=0.001$ nach folgender Vorsc
     \end{dcases}
     \text{ für Epoche $i$ und Lernrate $\lambda$}
 \]
-\\Somit ergeben sich die Parametrisierungen und damit die vollständige Trainingskonfiguration für alle 9 Epochen, wie in Tabelle~\ref{tab:layers} dargestellt.
+\\Dadurch ergeben sich die Parametrisierungen und somit auch die vollständige Trainingskonfiguration für alle 9 Epochen, wie in Tabelle~\ref{tab:layers} dargestellt.
 \begin{table}[!h]
     \centering
     \caption{Keras-Schichten für Fine-Tuning der Merkmalsextraktoren und Lernrate pro Epoche}
@@ -219,7 +221,7 @@ Die Größe der Lernrate wird basierend auf $\lambda=0.001$ nach folgender Vorsc
 \end{table}
 \subsection{Validierung}\label{ssec:validation}
 Neben den Testdaten (siehe Tabelle~\ref{tab:df40}) werden für eine aussagekräftige Evaluation geeignete Metriken benötigt.
-Diese müssen für Multi-Klassen-Probleme geeignet sein und insbesondere mit unausgewogenen Klassen umgehen können.
+Diese müssen für Multi-Klassen-Probleme geeignet sein und insbesondere mit unausgewogenen Klassen umgehen können, deshalb sind \textit{accuracy} und \textit{area under curve} ungeeignet.
 \\[0.5em]
 \textbf{Precision}: Misst den Anteil der korrekt vorhergesagten positiven Instanzen im Verhältnis zu allen Instanzen, die als positiv vorhergesagt wurden:
     \begin{center}
@@ -229,14 +231,14 @@ Diese müssen für Multi-Klassen-Probleme geeignet sein und insbesondere mit una
     \begin{center}
         $\displaystyle R_i=\frac{\text{TP}_i}{(\text{TP}_i+\text{FN}_i)}$ bzw. $\displaystyle R_\text{micro}=\frac{\sum_{i=1}^C\text{TP}_i}{\sum_{i=1}^C(\text{TP}_i+\text{FN}_i)}$ (aggregierter Durchschnittswert)
     \end{center}
-\textbf{F1-Score}: Ist das harmonische Mittel von Precision und Recall und bietet eine ausgewogene Metrik für die Modellleistung. Bei unbalancierten Daten erhalten Klassen mit mehr Instanzen ein höheres Gewicht.
+\textbf{F1-Score}: Ist das harmonische Mittel von Precision und Recall und bietet eine ausgewogene Metrik zur Bewertung der Modellleistung. Bei unbalancierten Daten können die F1-Scores von Klassen mit vielen Instanzen höhere Gewichte erhalten, wenn sie auf einen Wert reduziert werden sollen.
     \begin{center}
         $\displaystyle F_i=\frac{2\cdot P_i\cdot R_i}{P_i+R_i}$ bzw. $\displaystyle F_\text{weighted}=\frac{\sum_{i=1}^Cw_i\cdot F_i}{\sum_{i=1}^Cw_i}$ mit $w_i=\frac{\text{\#Instanzen Klasse }i}{\text{\#Instanzen gesamt}}$
     \end{center}
 
 \section{Implementierung}\label{sec:implementation}
 Das in dieser Untersuchung entwickelte Modell (siehe Abs.~\ref{ssec:model}) wurde mit TensorFlow in Python implementiert.
-Als Paket- und Umgebungsmanagement wurde MiniForge mit Mamba verwendet.
+Als Paket- und Umgebungsmanagement wurde MiniForge\footnote{MiniForge3, \url{https://github.com/conda-forge/miniforge/}} mit Mamba verwendet.
 Die folgenden Tools bzw. Versionen müssen in der virtuellen Umgebung installiert sein:
 \begin{itemize}
     \setlength{\itemsep}{0pt}
@@ -255,7 +257,7 @@ Der Einsatz von PyTorch ist deshalb vor allem dann sinnvoll, wenn mehr Kontrolle
 \\
 TensorFlow hingegen bietet durch die große Anzahl von High-Level-Schnittstellen und die umfangreiche Dokumentation einen einfacheren Einstieg.
 Es ist zudem sehr gut dazu geeignet, mit wenig Code einen lauffähigen Prototypen mit automatischen Optimierungen zu erstellen.
-Da im Rahmen dieser Arbeit keine neuen Komponenten für Netze entwickelt werden, sondern lediglich bereits bestehende zu einem neuen Modell kombiniert werden, und zuden wenig praktisches Vorwissen vorhanden war, ist TensorFlow als Framework die bessere Wahl.
+Da im Rahmen dieser Arbeit keine neuen Komponenten für Netze entwickelt werden, sondern lediglich bereits bestehende zu einem neuen Modell kombiniert werden, und zudem wenig praktisches Vorwissen vorhanden war, ist TensorFlow als Framework die bessere Wahl.
 
 \section{Evaluation}
 Insgesamt wurden 6 Modellkonfigurationen für jeweils 9 Epochen trainiert (siehe Abs.~\ref{ssec:training}). 
@@ -290,14 +292,14 @@ Die etwas niedrigeren F1-Scores bei \texttt{FS} deuten darauf hin, dass \resnet 
 Der geringfügig höheren F1-Scores bei \texttt{FR} legen nahe, dass \effnet vor allem bei dieser Klasse eine gute Balance zwischen Precision und Recall erzielt.
 \\
 Zusammenfassend kann gesagt werden, dass die Modelle insgesamt recht dicht beieinander liegen.
-Die besten Werte konnten für das \resnet-Modell mit einer Sequenzlänge von 12 erreicht werden (\resnet-12), was auf einen guten Trade-Off zwischen Performance und Rechenleistung hindeutet.
+Die besten Werte konnten für das \resnet-Modell mit einer Sequenzlänge von 12 erreicht werden (\resnet-12), was einen guten Trade-Off zwischen Performance und Rechenleistung darstellt.
 
 \section{Zusammenfassung}
 \subsection{Fazit}
-Im Rahmen dieser Arbeit wurde eine Architektur zur Klassifikation von DeepFake-Bildsequenzen entwickelt.
-Die Modelle bestehen aus einem Merkmalsextraktor (\resnet oder \effnet) als Baseline-Klassifikator mit einem dahinterliegenden BiLSTM und unterscheiden die Klassen \textit{original}, \textit{face-swap} und \textit{face-reenactment}.
-Dabei konnte gezeigt werden, dass mit \resnet insgesamt bessere Ergebnisse erzielt werden können.
-Obwohl die Leistung aller Modelle mit zunehmender Sequenzlänge leicht steigt, scheint bei Sequenzen der Länge 12 ein Sweet-Spot bezogen auf die verwendeten Trainingsparameter erreicht zu sein.
+Im Rahmen dieser Arbeit wurde eine Architektur zur Klassifikation von DeepFake-Bildsequenzen entwickelt und evaluiert.
+Die Modelle bestehen aus einem Merkmalsextraktor (\resnet oder \effnet) als Baseline-Klassifikator mit einem dahinterliegenden BiLSTM und unterscheiden die Klassen \textit{original}, \textit{face-swap} und \textit{face-reenactment} recht gut.
+Dabei konnte gezeigt werden, dass mit \resnet insgesamt leicht bessere Ergebnisse erzielt werden können.
+Obwohl die Leistung aller Modelle mit zunehmender Sequenzlänge geringfügig zunimmt, scheint bei Sequenzen der Länge 12 ein Sweet-Spot bezogen auf die verwendeten Trainingsparameter erreicht zu sein.
 Die \resnet-Modelle haben zwar Schwierigkeiten mit der \texttt{FS}-Klasse, das größte Problem der \effnet-Modelle bleibt aber die Trennung der Klassen \texttt{OR} und \texttt{FS}.
 
 \subsection{Ausblick für zukünftige Arbeiten}
@@ -316,7 +318,7 @@ Alternativ könnte mit einer Datenaugmentation eine fortgeschrittene Oversamplin
 Eine gute Datenaugmentation hat das Potenzial, das Generalisierungsvermögen der Modelle weiter zu steigern.
 \\[0.5em]
 \textbf{Zusätzliche Validierungsdaten}:\\
-Der DF40-Datensatz wird zwar bereits mit einem Validierungssplit ausgeliefert, allerdings sollte noch mindestens ein weiteres Datenset (z.B. DeepSpeakV1~\footnote{DeepSpeakV1, \url{https://huggingface.co/datasets/faridlab/deepspeak_v1}}) hinzugezogen werden, um die Generalisierung auf einer breiteren Datenbasis zu bestätigen.
+Der DF40-Datensatz wird zwar bereits mit einem Validierungssplit ausgeliefert, allerdings sollte noch mindestens ein weiteres Datenset (z.B. DeepSpeakV1\footnote{DeepSpeakV1, \url{https://huggingface.co/datasets/faridlab/deepspeak_v1}}) hinzugezogen werden, um die Generalisierung auf einer breiteren Datenbasis zu bestätigen.
 \\[0.5em]
 \textbf{Erweiterte Vorverarbeitung}:\\
 Das Modell kann aktuell nur Bildsequenzen mit Framegröße \imgsize klassifizieren.
@@ -328,8 +330,7 @@ Zu guter Letzt verarbeiten die aktuell verwendeten Merkmalsextraktoren \resnet u
 Da die Bilder im DF40-Datensatz eine Größe von \texttt{256x256x3} haben, gehen durch die \textit{resizing}-Operation einige Informationen verloren.
 Durch die Verwendung gesteigerter Netztiefen und -breiten könnten die Ergebnisse eventuell weiter verbessert werden.
 
-\bibliographystyle{plain}
-\bibliography{refs}
+\printbibliography
 
 \section*{Anhang}
 \begin{lstlisting}[label={apx:lst.df40},caption={Ordnerstruktur des DF40-Datensets im \texttt{io/}-Verzeichnis}]

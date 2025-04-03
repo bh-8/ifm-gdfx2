@@ -1,11 +1,11 @@
 io/
 tex/*.aux
 tex/*.bbl
+tex/*.bcf
 tex/*.blg
 tex/*.fdb_latexmk
 tex/*.fls
 tex/*.log
 tex/*.out
-tex/main.pdf
 tex/*.run.xml
 tex/*.synctex.gz
